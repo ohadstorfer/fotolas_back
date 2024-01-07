@@ -33,8 +33,30 @@ class PhotographerListCreateView(generics.ListCreateAPIView):
 
 
 class PhotographerDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Photographer.objects.all()
+    queryset = Photographer.objects.all()  # Add this line
     serializer_class = PhotographerSerializer
+
+    def get(self, request, *args, **kwargs):
+        photographer = self.get_object()
+
+        # Retrieve additional information
+        photographer_name = photographer.user.get_full_name()
+        followers_count = Follower.objects.filter(photographer=photographer).count()
+
+        # Include additional information in the response data
+        serializer = self.get_serializer(photographer)
+        data = serializer.data
+        data['photographer_name'] = photographer_name
+        data['followers_count'] = followers_count
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        obj = get_object_or_404(queryset, pk=self.kwargs['pk'])
+        self.check_object_permissions(self.request, obj)
+        return obj
+
 
 
 
