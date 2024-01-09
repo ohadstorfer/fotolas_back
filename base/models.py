@@ -77,6 +77,8 @@ class Photographer(models.Model):
 class Spot(models.Model):
     name = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
+    city = models.CharField(max_length=20, default="Tel Aviv")
+    country = models.CharField(max_length=20, default="Israel")
 
     def __str__(self) -> str:
         return f'{self.name}'
