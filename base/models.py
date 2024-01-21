@@ -4,14 +4,15 @@ from django.utils import timezone
 from django.db.models import Count
 
 class CustomUserManager(UserManager):
-    def _create_user(self, email, password, country, fullName, is_athlete=True, is_photographer=False, **extra_fields):
+    def _create_user(self, email, password, fullName, is_athlete=True, is_photographer=False, **extra_fields):
         if not email:
             raise ValueError("You have not provided a valid e-mail address")
+        if not password:
+            raise ValueError("The password field must be provided")
 
         email = self.normalize_email(email)
         user = self.model(
             email=email,
-            country=country,
             fullName=fullName,
             is_athlete=is_athlete,
             is_photographer=is_photographer,
@@ -22,25 +23,28 @@ class CustomUserManager(UserManager):
 
         return user
 
-    def create_user(self, email=None, password=None, country=None, fullName=None, **extra_fields):
+    def create_user(self, email=None, password=None,  fullName=None, **extra_fields):
         if not email:
             raise ValueError("The email field must be provided")
+        if not password:
+            raise ValueError("The password field must be provided")
         # Add additional validation if needed
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
-        return self._create_user(email, password, country, fullName, **extra_fields)
+        return self._create_user(email, password,  fullName, **extra_fields)
 
-    def create_superuser(self, email=None, password=None, country=None, fullName=None, **extra_fields):
+    def create_superuser(self, email=None, password=None,  fullName=None, **extra_fields):
         if not email:
             raise ValueError("The email field must be provided")
+        if not password:
+            raise ValueError("The password field must be provided")
         # Add additional validation if needed
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        return self._create_user(email, password, country, fullName, **extra_fields)
+        return self._create_user(email, password,  fullName, **extra_fields)
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
-    country = models.CharField(max_length=255)
     fullName = models.CharField(max_length=255)
     is_athlete = models.BooleanField(default=True)
     is_photographer = models.BooleanField(default=False)
@@ -55,7 +59,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'email'
     EMAIL_FIELD = 'email'
-    REQUIRED_FIELDS = ['country', 'fullName']
+    REQUIRED_FIELDS = ['password', 'fullName']
 
     def get_full_name(self):
         return self.fullName

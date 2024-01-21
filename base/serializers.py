@@ -6,10 +6,45 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['email'] = user.email
+        token['fullName'] = user.fullName
+        token['id'] = user.id
+        return token
+
+    def validate(self, attrs):
+            data = super().validate(attrs)
+
+            # Add additional data to the response
+            data['email'] = self.user.email
+            data['fullName'] = self.user.fullName
+            data['id'] = self.user.id
+
+            return data
+
+
+
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = '__all__'
+        fields = ['email', 'fullName', 'is_athlete', 'is_photographer', 'password']
+
+    def create(self, validated_data):
+        user = CustomUser.objects.create(
+            email=validated_data['email'],
+            fullName=validated_data['fullName'],
+            is_athlete=validated_data.get('is_athlete', False),
+            is_photographer=validated_data.get('is_photographer', False),
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+
+
+
 
 class PhotographerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -83,19 +118,6 @@ class AlbumsPricesSerializer(serializers.ModelSerializer):
 
 
 
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        # Add custom claims
-        token['username'] = user.get_full_name()
-        # Add more custom claims if needed
-        return token
-
-class CustomUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ['id', 'email', 'country', 'fullName', 'is_athlete', 'is_photographer']
 
 
 
@@ -163,3 +185,6 @@ class SessionAlbumBySpotSerializer(serializers.ModelSerializer):
         if request and obj.photographer.profile_image:
             return request.build_absolute_uri(obj.photographer.profile_image.url)
         return None
+    
+
+

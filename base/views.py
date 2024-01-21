@@ -1,5 +1,5 @@
 # views.py
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from rest_framework import generics , status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,6 +9,7 @@ from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+
 class CustomUserListCreateView(generics.ListCreateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
@@ -16,6 +17,12 @@ class CustomUserListCreateView(generics.ListCreateAPIView):
 class CustomUserDetailView(RetrieveUpdateDestroyAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
+
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+
 
     
 class PhotographerListCreateView(generics.ListCreateAPIView):
@@ -38,12 +45,8 @@ class PhotographerDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get(self, request, *args, **kwargs):
         photographer = self.get_object()
-
-        # Retrieve additional information
         photographer_name = photographer.user.get_full_name()
         followers_count = Follower.objects.filter(photographer=photographer).count()
-
-        # Include additional information in the response data
         serializer = self.get_serializer(photographer)
         data = serializer.data
         data['photographer_name'] = photographer_name
@@ -58,6 +61,20 @@ class PhotographerDetailView(generics.RetrieveUpdateDestroyAPIView):
         return obj
 
 
+class PhotographerByUserIdView(generics.RetrieveAPIView):
+    serializer_class = PhotographerSerializer
+
+    def get(self, request, *args, **kwargs):
+        user_id = self.kwargs['user_id']
+        photographer = get_object_or_404(Photographer, user__id=user_id)
+        photographer_name = photographer.user.get_full_name()
+        followers_count = Follower.objects.filter(photographer=photographer).count()
+        serializer = self.get_serializer(photographer)
+        data = serializer.data
+        data['photographer_name'] = photographer_name
+        data['followers_count'] = followers_count
+
+        return Response(data, status=status.HTTP_200_OK)
 
 
 
@@ -259,8 +276,6 @@ class AlbumsPricesDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
 
 
 
@@ -323,5 +338,45 @@ class PersonalAlbumListView(generics.ListAPIView):
         context['image_counts'] = {album.id: album.img_set.count() for album in self.get_queryset()}
         return context
 
+
+
+
+
+
+
+
+from django.http import HttpResponse
+
+def update_prices_view(request, session_album_id):
+    session_album = get_object_or_404(SessionAlbum, id=session_album_id)
+    albums_prices = session_album.albums_prices
+
+    # Update prices for PersonalAlbums
+    personal_albums = PersonalAlbum.objects.filter(session_album=session_album)
+
+    for personal_album in personal_albums:
+        image_count = personal_album.get_image_count()
+
+        # Update price based on image count
+        if 1 <= image_count <= 5:
+            personal_album.price = albums_prices.price_1_to_5
+        elif 6 <= image_count <= 10:
+            personal_album.price = albums_prices.price_6_to_10
+        elif 11 <= image_count <= 20:
+            personal_album.price = albums_prices.price_11_to_20
+        elif 21 <= image_count <= 50:
+            personal_album.price = albums_prices.price_21_to_50
+        elif image_count >= 51:
+            personal_album.price = albums_prices.price_51_plus
+
+        personal_album.save()
+
+    # Update prices for Images
+    Img.objects.filter(personal_album__session_album=session_album).update(
+        price= albums_prices.singlePhotoPrice
+    )
+
+    # Return an empty response with HTTP 204 No Content status
+    return HttpResponse(status=204)
 
 

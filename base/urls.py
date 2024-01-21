@@ -1,7 +1,7 @@
 # urls.py
 from django.urls import path
 from .views import (
-    AlbumsPricesDetailView, AlbumsPricesListCreateView, ChatDetailView, ChatListCreateView, CreateAlbumView, CustomUserListCreateView, CustomUserDetailView, FollowersByPhotographerListView, FollowersByUserListView, ImgByPersonalAlbumListView, MessageDetailView, MessageListCreateView, MyTokenObtainPairView, PersonalAlbumListView, 
+    AlbumsPricesDetailView, AlbumsPricesListCreateView, ChatDetailView, ChatListCreateView, CreateAlbumView, CustomUserListCreateView, CustomUserDetailView, FollowersByPhotographerListView, FollowersByUserListView, ImgByPersonalAlbumListView, MessageDetailView, MessageListCreateView, MyTokenObtainPairView, PersonalAlbumListView, PhotographerByUserIdView, 
     PhotographerListCreateView, PhotographerDetailView, SessionAlbumByPhotographer, SessionAlbumBySpot, SessionAlbumListAPIView, SpotLikesBySpotListView, SpotLikesByUserListView,
     SpotListCreateView, SpotDetailView,
     SessionAlbumListCreateView, SessionAlbumDetailView,
@@ -10,7 +10,7 @@ from .views import (
     CensoredImgListCreateView, CensoredImgDetailView,
     SpotLikeListCreateView, SpotLikeDetailView,
     FollowerListCreateView, FollowerDetailView,
-    OrderListCreateView, OrderDetailView,
+    OrderListCreateView, OrderDetailView, update_prices_view,
 )
 
 urlpatterns = [
@@ -21,6 +21,7 @@ urlpatterns = [
 
     path('photographers/', PhotographerListCreateView.as_view(), name='photographer-list-create'),
     path('photographers/<int:pk>/', PhotographerDetailView.as_view(), name='photographer-detail'),
+    path('photographer/by_user/<int:user_id>/', PhotographerByUserIdView.as_view(), name='photographer_by_user'),
 
     path('spots/', SpotListCreateView.as_view(), name='spot-list-create'),
     path('spots/<int:pk>/', SpotDetailView.as_view(), name='spot-detail'),
@@ -71,6 +72,8 @@ urlpatterns = [
 
     path('session-albums-with-details/', SessionAlbumListAPIView.as_view(), name='session-album-list'),
     path('session-albums-by-photographer/<int:photographer_id>/', SessionAlbumByPhotographer.as_view(), name='session-album-by-photographer'),
-     path('session-albums-by-spot/<int:spot_id>/', SessionAlbumBySpot.as_view(), name='session-album-by-spot'),
+    path('session-albums-by-spot/<int:spot_id>/', SessionAlbumBySpot.as_view(), name='session-album-by-spot'),
+
+    path('update_prices/<int:session_album_id>/', update_prices_view, name='update_prices'),
 
 ]
