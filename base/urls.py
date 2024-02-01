@@ -1,7 +1,7 @@
 # urls.py
 from django.urls import path
 from .views import (
-    AlbumsPricesDetailView, AlbumsPricesListCreateView, ChatDetailView, ChatListCreateView, CreateAlbumView, CustomUserListCreateView, CustomUserDetailView, FollowersByPhotographerListView, FollowersByUserListView, ImgByPersonalAlbumListView, MessageDetailView, MessageListCreateView, MyTokenObtainPairView, PersonalAlbumListView, PhotographerByUserIdView, 
+    AlbumsPricesDetailView, AlbumsPricesListCreateView, ChatDetailView, ChatListCreateView, CreateAlbumView, CustomUserListCreateView, CustomUserDetailView, FollowersByPhotographerListView, FollowersByUserListView, ImgByPersonalAlbumListView, ImgListCreateBulkView, MessageDetailView, MessageListCreateView, MyTokenObtainPairView, PersonalAlbumListView, PhotographerByUserIdView, 
     PhotographerListCreateView, PhotographerDetailView, SessionAlbumByPhotographer, SessionAlbumBySpot, SessionAlbumListAPIView, SpotLikesBySpotListView, SpotLikesByUserListView,
     SpotListCreateView, SpotDetailView,
     SessionAlbumListCreateView, SessionAlbumDetailView,
@@ -34,6 +34,7 @@ urlpatterns = [
 
     path('img/', ImgListCreateView.as_view(), name='img-list-create'),
     path('img/<int:pk>/', ImgDetailView.as_view(), name='img-detail'),
+    path('create_personal_albums_and_images/', ImgListCreateBulkView.as_view(), name='create_personal_albums_and_images'),
 
     path('censored-img/', CensoredImgListCreateView.as_view(), name='censored-img-list-create'),
     path('censored-img/<int:pk>/', CensoredImgDetailView.as_view(), name='censored-img-detail'),
@@ -61,9 +62,6 @@ urlpatterns = [
     path('chats/', ChatListCreateView.as_view(), name='chat-list-create'),
     path('chats/<int:pk>/', ChatDetailView.as_view(), name='chat-detail'),
 
-    path('albums_prices/', AlbumsPricesListCreateView.as_view(), name='albums_prices-list-create'),
-    path('albums_prices/<int:pk>/', AlbumsPricesDetailView.as_view(), name='albums_prices-detail'),
-
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
 
     path('api/img/by_personal_album/<int:personal_album_id>/', ImgByPersonalAlbumListView.as_view(), name='img_by_personal_album'),
@@ -75,5 +73,9 @@ urlpatterns = [
     path('session-albums-by-spot/<int:spot_id>/', SessionAlbumBySpot.as_view(), name='session-album-by-spot'),
 
     path('update_prices/<int:session_album_id>/', update_prices_view, name='update_prices'),
+
+    path('albums_prices/', AlbumsPricesListCreateView.as_view(), name='albums_prices-list-create'),
+    path('albums_prices/<int:pk>/', AlbumsPricesDetailView.as_view(), name='albums_prices-detail'),
+
 
 ]

@@ -72,17 +72,17 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 class Photographer(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     about = models.TextField()
-    profile_image = models.ImageField(default="default.png", null=True, blank=True)
-    cover_image = models.ImageField(default="default.png" , null=True, blank=True)
+    profile_image = models.CharField(default="default.png",max_length=255)
+    cover_image = models.CharField(default="default.png" ,max_length=255)
 
     def __str__(self) -> str:
         return f'{self.user}'
 
 class Spot(models.Model):
     name = models.CharField(max_length=255)
-    location = models.CharField(max_length=255)
-    city = models.CharField(max_length=20, default="Tel Aviv")
-    country = models.CharField(max_length=20, default="Israel")
+    location = models.CharField(max_length=255,null=True, blank=True)
+    city = models.CharField(max_length=20)
+    country = models.CharField(max_length=20)
 
     def __str__(self) -> str:
         return f'{self.name}'
@@ -91,26 +91,25 @@ class Spot(models.Model):
 class SessionAlbum(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    sessDate = models.DateTimeField(default=timezone.now)
+    sessDate = models.DateTimeField()
     spot = models.ForeignKey(Spot, on_delete=models.CASCADE)
     photographer = models.ForeignKey(Photographer, on_delete=models.CASCADE)
-    cover_image = models.ImageField(default="default.png")
+    cover_image = models.CharField(max_length=255, null=True, blank=True)
     albums_prices = models.OneToOneField('AlbumsPrices', on_delete=models.CASCADE, null=True, blank=True)
 
 
 class PersonalAlbum(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, default=1)
     session_album = models.ForeignKey(SessionAlbum, on_delete=models.CASCADE)
-    cover_image = models.ImageField(default="default.png")
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    cover_image = models.CharField(max_length=255, null=True, blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     def get_image_count(self):
         return Img.objects.filter(personal_album=self).count()
 
 class Img(models.Model):
-    photo = models.ImageField(default="default.png")
+    photo = models.CharField(max_length=255, null=True, blank=True)
     personal_album = models.ForeignKey(PersonalAlbum, on_delete=models.CASCADE)
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
 
 class AlbumsPrices(models.Model):

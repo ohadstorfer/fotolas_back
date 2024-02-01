@@ -123,6 +123,39 @@ class ImgDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
+class ImgListCreateBulkView(generics.ListCreateAPIView):
+    queryset = Img.objects.all()
+    serializer_class = ImgSerializer
+
+    def create(self, request, *args, **kwargs):
+        session_album_id = request.data.get('session_album_id')
+        images_arrays = request.data.get('images_arrays', [])
+
+        if not session_album_id or not images_arrays:
+            return Response({'error': 'session_album_id and images_arrays are required.'}, status=400)
+
+        # Bulk create PersonalAlbum instances
+        personal_albums = [PersonalAlbum(session_album_id=session_album_id) for _ in images_arrays]
+        PersonalAlbum.objects.bulk_create(personal_albums)
+
+        # Bulk create Img instances
+        img_instances = []
+        for personal_album, img_array in zip(personal_albums, images_arrays):
+            # Set the cover image for the first PersonalAlbum in each iteration+
+            if img_array:
+                personal_album.cover_image = img_array[0]
+                personal_album.save()
+
+            for image_url in img_array:
+                img_instance = Img(photo=image_url, personal_album=personal_album)
+                img_instances.append(img_instance)
+
+        Img.objects.bulk_create(img_instances)
+
+        # update_prices_view(request, session_album_id)
+
+        return Response({'success': 'Almost there! All the albums created successfully, now we update the prices.'}, status=201)
+
 
 
 class CensoredImgListCreateView(generics.ListCreateAPIView):
@@ -264,17 +297,6 @@ class ChatDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-class AlbumsPricesListCreateView(generics.ListCreateAPIView):
-    queryset = AlbumsPrices.objects.all()
-    serializer_class = AlbumsPricesSerializer
-
-class AlbumsPricesDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = AlbumsPrices.objects.all()
-    serializer_class = AlbumsPricesSerializer
-
-
-
-
 
 
 
@@ -292,9 +314,6 @@ class ImgByPersonalAlbumListView(generics.ListAPIView):
     
 
 
-
-
-    
     
 
 
@@ -343,13 +362,42 @@ class PersonalAlbumListView(generics.ListAPIView):
 
 
 
-
-
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from django.http import HttpResponse
 
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from .models import SessionAlbum, PersonalAlbum, Img, AlbumsPrices
+
+
+
+
+
+
+
+
+
+class AlbumsPricesListCreateView(generics.ListCreateAPIView):
+    queryset = AlbumsPrices.objects.all()
+    serializer_class = AlbumsPricesSerializer
+
+class AlbumsPricesDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = AlbumsPrices.objects.all()
+    serializer_class = AlbumsPricesSerializer
+
+
+
+
+
+
+@method_decorator(csrf_exempt, name='dispatch')
 def update_prices_view(request, session_album_id):
     session_album = get_object_or_404(SessionAlbum, id=session_album_id)
-    albums_prices = session_album.albums_prices
+
+    # Find the relevant AlbumsPrices instance for the session_album
+    albums_prices, created = AlbumsPrices.objects.get_or_create(session_album=session_album)
 
     # Update prices for PersonalAlbums
     personal_albums = PersonalAlbum.objects.filter(session_album=session_album)
@@ -373,7 +421,7 @@ def update_prices_view(request, session_album_id):
 
     # Update prices for Images
     Img.objects.filter(personal_album__session_album=session_album).update(
-        price= albums_prices.singlePhotoPrice
+        price=albums_prices.singlePhotoPrice
     )
 
     # Return an empty response with HTTP 204 No Content status

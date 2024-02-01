@@ -74,7 +74,7 @@ class PersonalAlbumSerializer(serializers.ModelSerializer):
 class ImgSerializer(serializers.ModelSerializer):
     class Meta:
         model = Img
-        fields = '__all__'
+        fields = ['id', 'photo', 'personal_album', 'price']
 
 class CensoredImgSerializer(serializers.ModelSerializer):
     class Meta:
@@ -145,10 +145,8 @@ class SessionAlbumWithDetailsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_photographer_profile_image(self, obj):
-        request = self.context.get('request', None)
-        # Construct the complete URL by joining the server URL with the relative path
-        if request and obj.photographer.profile_image:
-            return request.build_absolute_uri(obj.photographer.profile_image.url)
+        if obj.photographer.profile_image:
+            return obj.photographer.profile_image
         return None
     
 
@@ -156,35 +154,21 @@ class SessionAlbumWithDetailsSerializer(serializers.ModelSerializer):
 class SessionAlbumByPhotographerSerializer(serializers.ModelSerializer):
     spot_name = serializers.ReadOnlyField(source='spot.name')
     photographer_name = serializers.ReadOnlyField(source='photographer.user.fullName')
-    photographer_profile_image = serializers.SerializerMethodField()
+    photographer_profile_image = serializers.CharField(source='photographer.profile_image', read_only=True)
 
     class Meta:
         model = SessionAlbum
         fields = '__all__'
-
-    def get_photographer_profile_image(self, obj):
-        request = self.context.get('request', None)
-        # Construct the complete URL by joining the server URL with the relative path
-        if request and obj.photographer.profile_image:
-            return request.build_absolute_uri(obj.photographer.profile_image.url)
-        return None
-    
 
 
 class SessionAlbumBySpotSerializer(serializers.ModelSerializer):
     spot_name = serializers.ReadOnlyField(source='spot.name')
     photographer_name = serializers.ReadOnlyField(source='photographer.user.fullName')
-    photographer_profile_image = serializers.SerializerMethodField()
+    photographer_profile_image = serializers.CharField(source='photographer.profile_image', read_only=True)
 
     class Meta:
         model = SessionAlbum
         fields = '__all__'
-
-    def get_photographer_profile_image(self, obj):
-        request = self.context.get('request', None)
-        if request and obj.photographer.profile_image:
-            return request.build_absolute_uri(obj.photographer.profile_image.url)
-        return None
     
 
 
