@@ -6,8 +6,8 @@ from django.template import RequestContext
 from rest_framework import generics , status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import AlbumsPrices, Chat, CustomUser, Message, Photographer, Spot, SessionAlbum, Img, SpotLike, Follower, Order, Wave
-from .serializers import  AlbumsPricesSerializer, ChatSerializer, CustomUserSerializer, MessageSerializer, MyTokenObtainPairSerializer, PhotographerSerializer, SessionAlbumByPhotographerSerializer, SessionAlbumBySpotSerializer, SessionAlbumWithDetailsSerializer, SpotSerializer, SessionAlbumSerializer, ImgSerializer, SpotLikeSerializer, FollowerSerializer, OrderSerializer, WaveSerializer
+from .models import AlbumsPrices, AlbumsPricesForVideos, Chat, CustomUser, Message, Photographer, Purchase, PurchaseItem, Spot, SessionAlbum, Img, SpotLike, Follower, Video, Wave
+from .serializers import  AlbumsPricesForVideosSerializer, AlbumsPricesSerializer, ChatSerializer, CustomUserSerializer, MessageSerializer, MyTokenObtainPairSerializer, PhotographerSerializer, PurchaseItemSerializer, PurchaseSerializer, SessionAlbumByPhotographerSerializer, SessionAlbumBySpotSerializer, SessionAlbumWithDetailsSerializer, SpotSerializer, SessionAlbumSerializer, ImgSerializer, SpotLikeSerializer, FollowerSerializer, VideoSerializer, WaveSerializer
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -126,43 +126,6 @@ class ImgDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-# class ImgListCreateBulkView(generics.ListCreateAPIView):
-#     queryset = Img.objects.all()
-#     serializer_class = ImgSerializer
-
-#     def create(self, request, *args, **kwargs):
-#         session_album_id = request.data.get('session_album_id')
-#         images_arrays = request.data.get('images_arrays', [])
-
-#         if not session_album_id or not images_arrays:
-#             return Response({'error': 'session_album_id and images_arrays are required.'}, status=400)
-
-#         # Bulk create PersonalAlbum instances
-#         personal_albums = [PersonalAlbum(session_album_id=session_album_id) for _ in images_arrays]
-#         PersonalAlbum.objects.bulk_create(personal_albums)
-
-#         # Bulk create Img instances
-#         img_instances = []
-#         for personal_album, img_array in zip(personal_albums, images_arrays):
-#             # Set the cover image for the first PersonalAlbum in each iteration+
-#             if img_array:
-#                 personal_album.cover_image = img_array[0]
-#                 personal_album.save()
-
-#             for image_url in img_array:
-#                 img_instance = Img(photo=image_url, personal_album=personal_album)
-#                 img_instances.append(img_instance)
-
-#         Img.objects.bulk_create(img_instances)
-
-#         # update_prices_view(request, session_album_id)
-
-#         return Response({'success': 'Almost there! All the albums created successfully, now we update the prices.'}, status=201)
-
-
-
-
-
 
 
 
@@ -219,58 +182,254 @@ class FollowersByPhotographerListView(generics.ListAPIView):
 
 
 
+# *************************************************************************************************************************************
+
+class PurchaseListCreateView(generics.ListCreateAPIView):
+    queryset = Purchase.objects.all()
+    serializer_class = PurchaseSerializer
+
+class PurchaseDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Purchase.objects.all()
+    serializer_class = PurchaseSerializer
 
 
-class OrderListCreateView(generics.ListCreateAPIView):
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
 
-class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
+class PurchaseItemListCreateView(generics.ListCreateAPIView):
+    queryset = PurchaseItem.objects.all()
+    serializer_class = PurchaseItemSerializer
+
+class PurchaseItemDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = PurchaseItem.objects.all()
+    serializer_class = PurchaseItemSerializer
+
+
+class CreatePurchaseWithImagesView(APIView):
+    def post(self, request, *args, **kwargs):
+        try:
+            # Extract purchase data
+            purchase_data = {
+                "photographer": request.data.get('photographer_id'),
+                "surfer": request.data.get('surfer_id'),
+                "SessionAlbum": request.data.get('session_album_id'),
+            }
+            purchase_serializer = PurchaseSerializer(data=purchase_data)
+            
+            # Validate and save Purchase
+            if purchase_serializer.is_valid():
+                purchase = purchase_serializer.save()
+
+                # Extract image IDs
+                image_ids = request.data.get('image_ids', [])
+                for img_id in image_ids:
+                    img = Img.objects.get(id=img_id)
+                    purchase_item_data = {
+                        "PurchaseId": purchase.id,
+                        "Img": img.id
+                    }
+                    purchase_item_serializer = PurchaseItemSerializer(data=purchase_item_data)
+                    if purchase_item_serializer.is_valid():
+                        purchase_item_serializer.save()
+                    else:
+                        return Response(purchase_item_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                return Response(purchase_serializer.data, status=status.HTTP_201_CREATED)
+            return Response(purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        except Img.DoesNotExist:
+            return Response({"error": "Image not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+class CreatePurchaseWithVideosView(APIView):
+    def post(self, request, *args, **kwargs):
+        try:
+            # Extract purchase data
+            purchase_data = {
+                "photographer": request.data.get('photographer_id'),
+                "surfer": request.data.get('surfer_id'),
+                "SessionAlbum": request.data.get('session_album_id'),
+            }
+            purchase_serializer = PurchaseSerializer(data=purchase_data)
+            
+            # Validate and save Purchase
+            if purchase_serializer.is_valid():
+                purchase = purchase_serializer.save()
+
+                # Extract video IDs
+                video_ids = request.data.get('video_ids', [])
+                for video_id in video_ids:
+                    video = Video.objects.get(id=video_id)
+                    purchase_item_data = {
+                        "PurchaseId": purchase.id,
+                        "Video": video.id
+                    }
+                    purchase_item_serializer = PurchaseItemSerializer(data=purchase_item_data)
+                    if purchase_item_serializer.is_valid():
+                        purchase_item_serializer.save()
+                    else:
+                        return Response(purchase_item_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                return Response(purchase_serializer.data, status=status.HTTP_201_CREATED)
+            return Response(purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        except Video.DoesNotExist:
+            return Response({"error": "Video not found"}, status=status.HTTP_404_NOT_FOUND)
+        
 
 
 
 
-# class CreateAlbumView(APIView):
-#     def post(self, request, *args, **kwargs):
-#         """
-#         Handle POST request to create a Session Album, Personal Album, and Images.
-#         """
-#         session_album_data = request.data.get('session_album', {})
-#         personal_albums_data = request.data.get('personal_albums', [])
-#         images_data = request.data.get('images', [])
+class CreatePurchaseWithWavesView(APIView):
+    def post(self, request, *args, **kwargs):
+        try:
+            # Extract purchase data
+            purchase_data = {
+                "photographer": request.data.get('photographer_id'),
+                "surfer": request.data.get('surfer_id'),
+                "SessionAlbum": request.data.get('session_album_id'),
+            }
+            purchase_serializer = PurchaseSerializer(data=purchase_data)
+            
+            # Validate and save Purchase
+            if purchase_serializer.is_valid():
+                purchase = purchase_serializer.save()
 
-#         session_album_serializer = SessionAlbumSerializer(data=session_album_data)
-#         if session_album_serializer.is_valid():
-#             session_album = session_album_serializer.save()
-#         else:
-#             return Response(session_album_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # Extract wave IDs
+                wave_ids = request.data.get('wave_ids', [])
+                total_item_quantity = 0
+                
+                for wave_id in wave_ids:
+                    wave = Wave.objects.get(id=wave_id)
+                    images = wave.img_set.all()  # Get all images associated with the wave
 
-#         personal_albums = []
-#         for personal_album_data in personal_albums_data:
-#             personal_album_data['session_album'] = session_album.id
-#             personal_album_serializer = PersonalAlbumSerializer(data=personal_album_data)
-#             if personal_album_serializer.is_valid():
-#                 personal_album = personal_album_serializer.save()
-#                 personal_albums.append(personal_album)
-#             else:
-#                 session_album.delete()
-#                 return Response(personal_album_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    for img in images:
+                        purchase_item_data = {
+                            "PurchaseId": purchase.id,
+                            "Img": img.id
+                        }
+                        purchase_item_serializer = PurchaseItemSerializer(data=purchase_item_data)
+                        if purchase_item_serializer.is_valid():
+                            purchase_item_serializer.save()
+                            total_item_quantity += 1
+                        else:
+                            return Response(purchase_item_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Update total_item_quantity in the purchase
+                purchase.total_item_quantity = total_item_quantity
+                purchase.save()
 
-#         for personal_album in personal_albums:
-#             for image_data in images_data:
-#                 image_data['personal_album'] = personal_album.id
-#                 image_serializer = ImgSerializer(data=image_data)
-#                 if image_serializer.is_valid():
-#                     image_serializer.save()
-#                 else:
-#                     session_album.delete()
-#                     for album in personal_albums:
-#                         album.delete()
-#                     return Response(image_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response(purchase_serializer.data, status=status.HTTP_201_CREATED)
+            return Response(purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        except Wave.DoesNotExist:
+            return Response({"error": "Wave not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Img.DoesNotExist:
+            return Response({"error": "Image not found"}, status=status.HTTP_404_NOT_FOUND)
+        
 
-#         return Response({"detail": "Album created successfully."}, status=status.HTTP_201_CREATED)
+
+
+
+# class GetPurchasedItemsBySurfer(APIView):
+#     def get(self, request, surfer_id):
+#         try:
+#             # Find all Purchases for the given surfer
+#             purchases = Purchase.objects.filter(surfer_id=surfer_id)
+#             items_by_purchase = {}
+
+#             for purchase in purchases:
+#                 purchase_items = PurchaseItem.objects.filter(PurchaseId=purchase.id)
+#                 items_by_purchase[purchase.id] = []
+
+#                 for item in purchase_items:
+#                     # If the item is an image, add it to the list
+#                     if item.Img:
+#                         items_by_purchase[purchase.id].append({
+#                             'type': 'image',
+#                             'id': item.Img.id,
+#                             'photo': item.Img.photo,
+#                             'WatermarkedPhoto': item.Img.WatermarkedPhoto,
+#                             # Add other fields as necessary
+#                         })
+
+#                     # If the item is a video, add it to the list
+#                     if item.Video:
+#                         items_by_purchase[purchase.id].append({
+#                             'type': 'video',
+#                             'id': item.Video.id,
+#                             'video': item.Video.video,
+#                             'WatermarkedVideo': item.Video.WatermarkedVideo,
+#                             # Add other fields as necessary
+#                         })
+
+#             return Response({'items_by_purchase': items_by_purchase}, status=status.HTTP_200_OK)
+
+#         except Purchase.DoesNotExist:
+#             return Response({"error": "No purchases found for this user"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+
+class GetPurchasedItemsBySurfer(APIView):
+    def get(self, request, surfer_id):
+        try:
+            # Find all Purchases for the given surfer
+            purchases = Purchase.objects.filter(surfer_id=surfer_id)
+            purchased_images = {}
+            purchased_videos = {}
+
+            for purchase in purchases:
+                purchase_items = PurchaseItem.objects.filter(PurchaseId=purchase.id)
+
+                # Gather images
+                for item in purchase_items:
+                    if item.Img:
+                        if purchase.id not in purchased_images:
+                            purchased_images[purchase.id] = []
+                        purchased_images[purchase.id].append({
+                            'id': item.Img.id,
+                            'photo': item.Img.photo,
+                            'WatermarkedPhoto': item.Img.WatermarkedPhoto,
+                            # Add other fields as necessary
+                        })
+                    
+                    # Gather videos
+                    if item.Video:
+                        if purchase.id not in purchased_videos:
+                            purchased_videos[purchase.id] = []
+                        purchased_videos[purchase.id].append({
+                            'id': item.Video.id,
+                            'video': item.Video.video,
+                            'WatermarkedVideo': item.Video.WatermarkedVideo,
+                            # Add other fields as necessary
+                        })
+
+            return Response({
+                'purchased_images': purchased_images,
+                'purchased_videos': purchased_videos
+            }, status=status.HTTP_200_OK)
+
+        except Purchase.DoesNotExist:
+            return Response({"error": "No purchases found for this user"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+
+class PurchasesByPhotographerView(generics.ListAPIView):
+    serializer_class = PurchaseSerializer
+
+    def get_queryset(self):
+        photographer_id = self.kwargs['photographer_id']
+        return Purchase.objects.filter(photographer_id=photographer_id)
+
+class PurchasesBySurferView(generics.ListAPIView):
+    serializer_class = PurchaseSerializer
+
+    def get_queryset(self):
+        surfer_id = self.kwargs['surfer_id']
+        return Purchase.objects.filter(surfer_id=surfer_id)
+    
+
+
+ # *************************************************************************************************************************************
+
     
 
 
@@ -386,6 +545,43 @@ class AlbumsPricesDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
+class AlbumsPricesForVideosListCreateView(generics.ListCreateAPIView):
+    queryset = AlbumsPricesForVideos.objects.all()
+    serializer_class = AlbumsPricesForVideosSerializer
+
+class AlbumsPricesForVideosDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = AlbumsPricesForVideos.objects.all()
+    serializer_class = AlbumsPricesForVideosSerializer
+
+
+
+
+
+class AlbumsPricesBySess(generics.GenericAPIView):
+    serializer_class = AlbumsPricesSerializer
+
+    def get(self, request, session_album_id):
+        try:
+            albums_prices = AlbumsPrices.objects.get(session_album_id=session_album_id)
+            serializer = self.get_serializer(albums_prices)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except AlbumsPrices.DoesNotExist:
+            return Response({"error": "AlbumsPrices not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+class AlbumsPricesForVideosBySess(generics.GenericAPIView):
+    serializer_class = AlbumsPricesForVideosSerializer
+
+    def get(self, request, session_album_id):
+        try:
+            albums_prices = AlbumsPricesForVideos.objects.get(session_album_id=session_album_id)
+            serializer = self.get_serializer(albums_prices)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except AlbumsPricesForVideos.DoesNotExist:
+            return Response({"error": "AlbumsPrices not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
 
 
 # @method_decorator(csrf_exempt, name='dispatch')
@@ -437,12 +633,19 @@ from rest_framework.decorators import api_view
 
 
 from django.conf import settings
+from botocore.config import Config
 
 
 @api_view(['GET'])
 def get_batch_presigned_urlssss(request):
-    s3 = boto3.client('s3', region_name='us-east-2', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
-    
+    # Configure S3 client with Transfer Acceleration
+    s3 = boto3.client(
+        's3',
+        region_name='us-east-2',
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        config=Config(s3={'use_accelerate_endpoint': True})
+    )
 
     # Number of presigned URLs to generate (assuming each URL corresponds to an image)
     num_urls = int(request.GET.get('num_urls', 1))  # Default to 1 if not specified
@@ -454,8 +657,129 @@ def get_batch_presigned_urlssss(request):
         
         presigned_url = s3.generate_presigned_url(
             'put_object',
-            Params={'Bucket': 'surfingram', 'Key': unique_filename },  # Customize Key as needed
-            ExpiresIn=3600  # URL expiration time in seconds
+            Params={'Bucket': 'surfingram', 'Key': unique_filename},  # Customize Key as needed
+            ExpiresIn=36000  # URL expiration time in seconds
+        )
+        presigned_urls.append(presigned_url)
+    
+    return JsonResponse({'urls': presigned_urls})
+
+
+
+@api_view(['GET'])
+def presigned_urls_for_originals(request):
+    # Configure S3 client with Transfer Acceleration
+    s3 = boto3.client(
+        's3',
+        region_name='us-east-2',
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        config=Config(s3={'use_accelerate_endpoint': True})
+    )
+
+    # Number of presigned URLs to generate (assuming each URL corresponds to an image)
+    num_urls = int(request.GET.get('num_urls', 1))  # Default to 1 if not specified
+    
+    # Generate presigned URLs for batch upload
+    presigned_urls = []
+    for _ in range(num_urls):
+        unique_filename = f'{uuid.uuid4()}.jpg'
+        
+        presigned_url = s3.generate_presigned_url(
+            'put_object',
+            Params={'Bucket': 'surfingram', 'Key': unique_filename},  # Customize Key as needed
+            ExpiresIn=36000  # URL expiration time in seconds
+        )
+        presigned_urls.append(presigned_url)
+    
+    return JsonResponse({'urls': presigned_urls})
+
+
+
+@api_view(['GET'])
+def presigned_urls_for_watermarked(request):
+    # Configure S3 client with Transfer Acceleration
+    s3 = boto3.client(
+        's3',
+        region_name='us-east-2',
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        config=Config(s3={'use_accelerate_endpoint': True})
+    )
+
+    # Number of presigned URLs to generate (assuming each URL corresponds to an image)
+    num_urls = int(request.GET.get('num_urls', 1))  # Default to 1 if not specified
+    
+    # Generate presigned URLs for batch upload
+    presigned_urls = []
+    for _ in range(num_urls):
+        unique_filename = f'{uuid.uuid4()}.jpg'
+        
+        presigned_url = s3.generate_presigned_url(
+            'put_object',
+            Params={'Bucket': 'surfingram-watermarked', 'Key': unique_filename},  # Customize Key as needed
+            ExpiresIn=36000  # URL expiration time in seconds
+        )
+        presigned_urls.append(presigned_url)
+    
+    return JsonResponse({'urls': presigned_urls})
+
+
+
+
+@api_view(['GET'])
+def presigned_urls_for_original_videos(request):
+    # Configure S3 client with Transfer Acceleration
+    s3 = boto3.client(
+        's3',
+        region_name='us-east-2',
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        config=Config(s3={'use_accelerate_endpoint': True})
+    )
+
+    # Number of presigned URLs to generate (assuming each URL corresponds to an image)
+    num_urls = int(request.GET.get('num_urls', 1))  # Default to 1 if not specified
+    
+    # Generate presigned URLs for batch upload
+    presigned_urls = []
+    for _ in range(num_urls):
+        unique_filename = f'{uuid.uuid4()}.mp4'
+        
+        presigned_url = s3.generate_presigned_url(
+            'put_object',
+            Params={'Bucket': 'surfingram', 'Key': unique_filename},  # Customize Key as needed
+            ExpiresIn=36000  # URL expiration time in seconds
+        )
+        presigned_urls.append(presigned_url)
+    
+    return JsonResponse({'urls': presigned_urls})
+
+
+
+@api_view(['GET'])
+def presigned_urls_for_watermarked_videos(request):
+    # Configure S3 client with Transfer Acceleration
+    s3 = boto3.client(
+        's3',
+        region_name='us-east-2',
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        config=Config(s3={'use_accelerate_endpoint': True})
+    )
+
+    # Number of presigned URLs to generate (assuming each URL corresponds to an image)
+    num_urls = int(request.GET.get('num_urls', 1))  # Default to 1 if not specified
+    
+    # Generate presigned URLs for batch upload
+    presigned_urls = []
+    for _ in range(num_urls):
+        unique_filename = f'{uuid.uuid4()}.mp4'
+        
+        presigned_url = s3.generate_presigned_url(
+            'put_object',
+            Params={'Bucket': 'surfingram-watermarked', 'Key': unique_filename},  # Customize Key as needed
+            ExpiresIn=36000  # URL expiration time in seconds
         )
         presigned_urls.append(presigned_url)
     
@@ -466,6 +790,33 @@ def get_batch_presigned_urlssss(request):
 
 
 
+@api_view(['GET'])
+def presigned_urls_for_profile_pictures(request):
+    # Configure S3 client with Transfer Acceleration
+    s3 = boto3.client(
+        's3',
+        region_name='us-east-2',
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        config=Config(s3={'use_accelerate_endpoint': True})
+    )
+
+    # Number of presigned URLs to generate (assuming each URL corresponds to an image)
+    num_urls = int(request.GET.get('num_urls', 1))  # Default to 1 if not specified
+    
+    # Generate presigned URLs for batch upload
+    presigned_urls = []
+    for _ in range(num_urls):
+        unique_filename = f'{uuid.uuid4()}.jpg'
+        
+        presigned_url = s3.generate_presigned_url(
+            'put_object',
+            Params={'Bucket': 'surfingram-profile-images', 'Key': unique_filename},  # Customize Key as needed
+            ExpiresIn=36000  # URL expiration time in seconds
+        )
+        presigned_urls.append(presigned_url)
+    
+    return JsonResponse({'urls': presigned_urls})
 
 
 import requests
@@ -473,6 +824,7 @@ from datetime import datetime
 from PIL import Image
 from io import BytesIO
 from functools import lru_cache
+
 
 @api_view(['POST'])
 def create_images_and_waves(request):
@@ -489,22 +841,45 @@ def create_images_and_waves(request):
 
     TIME_GAP_THRESHOLD = 5  # seconds
 
-    for original_url, watermarked_url in zip(original_urls, watermarked_urls):
-        datetime_original = get_datetime_original_from_image(original_url)
-        print(datetime_original)
+    try:
+        for original_url, watermarked_url in zip(original_urls, watermarked_urls):
+            datetime_original = get_datetime_original_from_image(original_url)
+            print(datetime_original)
 
-        if datetime_original:
-            if not current_wave or (datetime_original - previous_datetime) > timedelta(seconds=TIME_GAP_THRESHOLD):
-                current_wave = create_wave(session_album_id, original_url)
-                previous_datetime = datetime_original
+            if datetime_original:
+                if not current_wave or (datetime_original - previous_datetime) > timedelta(seconds=TIME_GAP_THRESHOLD):
+                    current_wave = create_wave(session_album_id, watermarked_url)
+                    previous_datetime = datetime_original
 
-            images_and_waves.append((original_url, watermarked_url, current_wave))
+                images_and_waves.append((original_url, watermarked_url, current_wave))
+            else:
+                print(f"Skipping image {original_url} due to missing DateTimeOriginal.")
+        
+        if images_and_waves:
+            create_images(images_and_waves)
         else:
-            print(f"Skipping image {original_url} due to missing DateTimeOriginal.")
+            raise Exception("No images to create waves.")
 
-    create_images(images_and_waves)
+        return Response({'message': 'Images and Waves created successfully'}, status=status.HTTP_201_CREATED)
 
-    return Response({'message': 'Images and Waves created successfully'}, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        print(f"Error creating waves: {e}")
+        # Create images without waves
+        images_to_create = [
+            Img(photo=original_url, WatermarkedPhoto=watermarked_url, SessionAlbum_id=session_album_id)
+            for original_url, watermarked_url in zip(original_urls, watermarked_urls)
+        ]
+        Img.objects.bulk_create(images_to_create)
+
+        # Update the session album to set dividedToWaves to True
+        try:
+            session_album = SessionAlbum.objects.get(id=session_album_id)
+            session_album.dividedToWaves = True
+            session_album.save()
+        except SessionAlbum.DoesNotExist:
+            print(f"SessionAlbum with id {session_album_id} does not exist.")
+
+        return Response({'message': 'Images created successfully, but wave creation failed'}, status=status.HTTP_201_CREATED)
 
 def create_wave(session_album_id, cover_image_url):
     wave = Wave.objects.create(session_album_id=session_album_id, cover_image=cover_image_url)
@@ -512,28 +887,87 @@ def create_wave(session_album_id, cover_image_url):
 
 def create_images(images_and_waves):
     images_to_create = [
-        Img(photo=original_url, WatermarkedPhoto=watermarked_url, wave=wave)
+        Img(photo=original_url, WatermarkedPhoto=watermarked_url, wave=wave, SessionAlbum_id=wave.session_album_id if wave else None)
         for original_url, watermarked_url, wave in images_and_waves
     ]
     Img.objects.bulk_create(images_to_create)
 
-@lru_cache(maxsize=128)  # Cache up to 128 URLs
+@lru_cache(maxsize=1000000)
 def get_datetime_original_from_image(url):
     try:
         response = requests.get(url)
         image = Image.open(BytesIO(response.content))
         exif_data = image._getexif()
-        datetime_original = exif_data.get(36867) if exif_data else None
-        return datetime.strptime(datetime_original, '%Y:%m:%d %H:%M:%S') if datetime_original else None
+        
+        if not exif_data:
+            return None
+
+        # Possible EXIF tags for dates
+        date_tags = [36867, 36868, 306]  # DateTimeOriginal, DateTimeDigitized, DateTime
+
+        datetime_original = None
+        for tag in date_tags:
+            datetime_str = exif_data.get(tag)
+            if datetime_str:
+                try:
+                    datetime_original = datetime.strptime(datetime_str, '%Y:%m:%d %H:%M:%S')
+                    break
+                except ValueError as ve:
+                    print(f"Error parsing date string: {datetime_str} for tag {tag}, error: {ve}")
+        
+        return datetime_original
     except Exception as e:
         print(f"Error getting DateTimeOriginal from image: {e}")
         return None
 
-    # def create_personal_album(session_album_id, cover_image):
-#     # Create a new personal album associated with the session album
-#     personal_album = PersonalAlbum.objects.create(session_album_id=session_album_id, cover_image=cover_image)
-#     return personal_album
     
+
+
+class GetImagesBySessionAlbumView(APIView):
+    def get(self, request, session_album_id):
+        try:
+            session_album = SessionAlbum.objects.get(id=session_album_id)
+            images = Img.objects.filter(SessionAlbum=session_album)
+            serializer = ImgSerializer(images, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except SessionAlbum.DoesNotExist:
+            return Response({'error': 'SessionAlbum not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+class CreateVideosView(APIView):
+    def post(self, request, *args, **kwargs):
+        videos_data = request.data.get('videos', [])
+        session_album_id = request.data.get('session_album')
+
+        if not videos_data or not session_album_id:
+            return Response({'error': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
+
+        session_album = SessionAlbum.objects.filter(id=session_album_id).first()
+
+        if not session_album:
+            return Response({'error': 'Session album not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        videos = []
+        for video_data in videos_data:
+            original_url = video_data.get('original')
+            transformed_url = video_data.get('transformed')
+
+            if not original_url or not transformed_url:
+                return Response({'error': 'Invalid video data'}, status=status.HTTP_400_BAD_REQUEST)
+
+            video = Video(video=original_url, WatermarkedVideo=transformed_url, SessionAlbum=session_album)
+            video.save()
+            videos.append(video)
+
+        serializer = VideoSerializer(videos, many=True)
+        return Response({'message': 'Videos created successfully', 'videos': serializer.data}, status=status.HTTP_201_CREATED)
+
+
+
+
+
 @api_view(['GET'])
 def get_waves_for_session_album(request, session_album_id):
     try:
@@ -542,6 +976,27 @@ def get_waves_for_session_album(request, session_album_id):
         return Response(serializer.data)
     except Wave.DoesNotExist:
         return Response({'message': 'No waves found for the provided SessionAlbum ID.'}, status=status.HTTP_404_NOT_FOUND)
+    
+
+
+@api_view(['POST'])
+def get_waves(request):
+    try:
+        wave_ids = request.data.get('waveIds', [])
+
+        if not wave_ids:
+            return Response({'error': 'No wave IDs provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Retrieve the wave objects based on the provided IDs
+        waves = Wave.objects.filter(id__in=wave_ids)
+
+        # Serialize the wave objects
+        serializer = WaveSerializer(waves, many=True)
+
+        return Response({'waves': serializer.data}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
 
@@ -581,6 +1036,36 @@ def get_watermarked_photos_by_wave(request, wave_id):
     except Img.DoesNotExist:
         return Response({'message': 'No images found for the provided Wave ID.'}, status=status.HTTP_404_NOT_FOUND)
     
+
+
+
+@api_view(['GET'])
+def get_original_videos(request, session_album_id):
+    session_album = get_object_or_404(SessionAlbum, id=session_album_id)
+    videos = Video.objects.filter(SessionAlbum=session_album).values('video')
+    original_videos = [video['video'] for video in videos if video['video']]
+    return Response(original_videos)
+
+@api_view(['GET'])
+def get_watermarked_videos(request, session_album_id):
+    session_album = get_object_or_404(SessionAlbum, id=session_album_id)
+    videos = Video.objects.filter(SessionAlbum=session_album).values('WatermarkedVideo')
+    WatermarkedVideos = [video['WatermarkedVideo'] for video in videos if video['WatermarkedVideo']]
+    return Response(WatermarkedVideos)
+
+@api_view(['GET'])
+def get_videos_by_session(request, session_album_id):
+    session_album = get_object_or_404(SessionAlbum, id=session_album_id)
+    videos = Video.objects.filter(SessionAlbum=session_album)
+    serializer = VideoSerializer(videos, many=True)
+    return Response(serializer.data)
+
+
+
+
+
+
+
 
 
 

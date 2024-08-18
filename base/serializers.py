@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import  AlbumsPrices, Chat, CustomUser, Message, Photographer, Spot, SessionAlbum, Img, SpotLike, Follower, Order, Wave
+from .models import  AlbumsPrices, AlbumsPricesForVideos, Chat, CustomUser, Message, Photographer, Purchase, PurchaseItem, Spot, SessionAlbum, Img, SpotLike, Follower, Video, Wave
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -61,15 +61,7 @@ class SessionAlbumSerializer(serializers.ModelSerializer):
         model = SessionAlbum
         fields = '__all__'
 
-# class PersonalAlbumSerializer(serializers.ModelSerializer):
-#     image_count = serializers.SerializerMethodField()
 
-#     def get_image_count(self, obj):
-#         return self.context['image_counts'][obj.id]
-
-#     class Meta:
-#         model = PersonalAlbum
-#         fields = '__all__'
 
 class ImgSerializer(serializers.ModelSerializer):
     class Meta:
@@ -91,9 +83,14 @@ class FollowerSerializer(serializers.ModelSerializer):
         model = Follower
         fields = '__all__'
 
-class OrderSerializer(serializers.ModelSerializer):
+class PurchaseSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Order
+        model = Purchase
+        fields = '__all__'
+
+class PurchaseItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PurchaseItem
         fields = '__all__'
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -113,22 +110,41 @@ class AlbumsPricesSerializer(serializers.ModelSerializer):
         model = AlbumsPrices
         fields = '__all__'
 
-
+class AlbumsPricesForVideosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlbumsPricesForVideos
+        fields = '__all__'
 
 class WaveSerializer(serializers.ModelSerializer):
+    image_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Wave
-        fields = ['id', 'session_album', 'cover_image']
+        fields = ['id', 'session_album', 'cover_image', 'image_count']
 
+# class PersonalAlbumSerializer(serializers.ModelSerializer):
+#     image_count = serializers.SerializerMethodField()
 
+#     def get_image_count(self, obj):
+#         return self.context['image_counts'][obj.id]
 
+#     class Meta:
+#         model = PersonalAlbum
+#         fields = '__all__'
 
 
 class ImgSerializer(serializers.ModelSerializer):
     class Meta:
         model = Img
-        fields = ['id', 'photo','WatermarkedPhoto', 'wave', 'price']
+        fields = ['id', 'photo','WatermarkedPhoto', 'wave', 'SessionAlbum']
 
+
+class VideoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Video
+        fields = '__all__'
+
+        
 
 class WatermarkedImgSerializer(serializers.ModelSerializer):
     class Meta:
@@ -182,5 +198,3 @@ class SessionAlbumBySpotSerializer(serializers.ModelSerializer):
         model = SessionAlbum
         fields = '__all__'
     
-
-

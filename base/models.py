@@ -96,40 +96,38 @@ class SessionAlbum(models.Model):
     spot = models.ForeignKey(Spot, on_delete=models.CASCADE)
     photographer = models.ForeignKey(Photographer, on_delete=models.CASCADE)
     cover_image = models.CharField(max_length=255, null=True, blank=True)
-    # albums_prices = models.OneToOneField('AlbumsPrices', on_delete=models.CASCADE, null=True, blank=True)
+    videos = models.BooleanField(default=False)
+    dividedToWaves = models.BooleanField( null=True)
 
 
 class Wave(models.Model):
     session_album = models.ForeignKey(SessionAlbum, on_delete=models.CASCADE)
     cover_image = models.CharField(max_length=255, null=True, blank=True)
 
+    def image_count(self):
+        return self.img_set.count()
     
+
 
 class Img(models.Model):
     photo = models.CharField(max_length=255, null=True, blank=True)
     WatermarkedPhoto = models.CharField(max_length=255, null=True, blank=True)
-    wave = models.ForeignKey(Wave, on_delete=models.CASCADE, blank=True, default=1)
-    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    wave = models.ForeignKey(Wave, on_delete=models.CASCADE, null=True,blank=True)
+    SessionAlbum = models.ForeignKey(SessionAlbum, on_delete=models.CASCADE, null=True, blank=True)
 
 
-# class PersonalAlbum(models.Model):
-#     session_album = models.ForeignKey(SessionAlbum, on_delete=models.CASCADE)
-#     cover_image = models.CharField(max_length=255, null=True, blank=True)
-#     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
-#     def get_image_count(self):
-#         return Img.objects.filter(personal_album=self).count()
+class Video(models.Model):
+    video = models.CharField(max_length=255, null=True, blank=True)
+    WatermarkedVideo = models.CharField(max_length=255, null=True, blank=True)
+    SessionAlbum = models.ForeignKey(SessionAlbum, on_delete=models.CASCADE, null=True, blank=True)
+    img = models.CharField(max_length=255, null=True, blank=True)
     
-
-
-
 
 class AlbumsPrices(models.Model):
     session_album = models.ForeignKey(SessionAlbum, on_delete=models.CASCADE)
-    singlePhotoPrice = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     price_1_to_5 = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    price_6_to_10 = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    price_11_to_20 = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    price_6_to_20 = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     price_21_to_50 = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     price_51_plus = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
@@ -137,23 +135,42 @@ class AlbumsPrices(models.Model):
         return f'AlbumsPrices - Session Album: {self.session_album.id}'
 
 
-class Order(models.Model):
-    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+class AlbumsPricesForVideos(models.Model):
+    session_album = models.ForeignKey(SessionAlbum, on_delete=models.CASCADE)
+    price_1_to_5 = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    price_6_to_15 = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    price_16_plus = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f'AlbumsPrices - Session Album: {self.session_album.id}'
+    
+
+
+
+
+
+
+class Purchase(models.Model):
+    photographer = models.ForeignKey(Photographer, on_delete=models.CASCADE, related_name='purchases_as_photographer')
+    surfer = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='purchases_as_surfer')
     order_date = models.DateTimeField(auto_now_add=True)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-
-    def __str__(self):
-        return f'Order {self.id} - {self.user}'
-
-
-class OrderItem(models.Model):
-    orderId = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')
-    Wave = models.ForeignKey('Wave', on_delete=models.CASCADE, null=True, blank=True)
-    img_quantity = models.ForeignKey('Img', on_delete=models.CASCADE, null=True, blank=True)
+    total_item_quantity = models.IntegerField( null=True, blank=True)
+    SessionAlbum = models.ForeignKey(SessionAlbum, on_delete=models.CASCADE,null=True, blank=True)
 
 
     def __str__(self):
-        return f'Order Item {self.id} - {self.order.user}'
+        return f'Purchase {self.id} - Photographer: {self.photographer.id}, Surfer: {self.surfer.id}'
+
+
+class PurchaseItem(models.Model):
+    PurchaseId = models.ForeignKey(Purchase , on_delete=models.CASCADE, related_name='order_items')
+    Img = models.ForeignKey(Img, on_delete=models.CASCADE, related_name='Img', null=True, blank=True)
+    Video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='Video', null=True, blank=True)
+    
+
+    # def __str__(self):
+    #     return f'Purchase Item {self.id} - {self.order.user}'
 
 
 
