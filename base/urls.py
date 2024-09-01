@@ -2,14 +2,14 @@
 from django import views
 from django.urls import path
 from .views import (
-     AlbumsPricesBySess, AlbumsPricesDetailView, AlbumsPricesForVideosBySess, AlbumsPricesForVideosDetailView, AlbumsPricesForVideosListCreateView, AlbumsPricesListCreateView, ChatDetailView, ChatListCreateView, CreatePurchaseWithImagesView, CreatePurchaseWithVideosView, CreatePurchaseWithWavesView, CreateVideosView, CustomUserListCreateView, CustomUserDetailView, FollowersByPhotographerListView, FollowersByUserListView,  GetImagesBySessionAlbumView, GetPurchasedItemsBySurfer, MessageDetailView, MessageListCreateView, MyTokenObtainPairView, PhotographerByUserIdView, 
+     AlbumsPricesBySess, AlbumsPricesDetailView, AlbumsPricesForVideosBySess, AlbumsPricesForVideosDetailView, AlbumsPricesForVideosListCreateView, AlbumsPricesListCreateView, ChatDetailView, ChatListCreateView, CreatePurchaseWithImagesView, CreatePurchaseWithVideosView, CreatePurchaseWithWavesView, CreateVideosView, CustomUserListCreateView, CustomUserDetailView, FollowersByPhotographerListView, FollowersByUserListView,  GetImagesBySessionAlbumView, GetPurchasedItemsBySurfer, GetPurchasesByPhotographerName, MessageDetailView, MessageListCreateView, MyTokenObtainPairView, PhotographerByUserIdView, PhotographerDetailUpdateView, 
     PhotographerListCreateView, PhotographerDetailView, PurchaseDetailView, PurchaseItemDetailView, PurchaseItemListCreateView, PurchaseListCreateView, PurchasesByPhotographerView, PurchasesBySurferView, SessionAlbumByPhotographer, SessionAlbumBySpot, SessionAlbumListAPIView, SpotLikesBySpotListView, SpotLikesByUserListView,
     SpotListCreateView, SpotDetailView,
     SessionAlbumListCreateView, SessionAlbumDetailView,
     ImgListCreateView, ImgDetailView,
     SpotLikeListCreateView, SpotLikeDetailView,
     FollowerListCreateView, FollowerDetailView,
-    create_images_and_waves, get_batch_presigned_urlssss, get_images_for_multiple_waves, get_images_for_wave, get_original_videos, get_videos_by_session, get_watermarked_photos_by_wave, get_watermarked_videos, get_waves, get_waves_for_session_album, presigned_urls_for_original_videos, presigned_urls_for_originals, presigned_urls_for_profile_pictures, presigned_urls_for_watermarked, presigned_urls_for_watermarked_videos, 
+    create_images_and_waves, create_videos, get_batch_presigned_urlssss, get_images_for_multiple_waves, get_images_for_wave, get_original_videos, get_videos_by_session, get_watermarked_photos_by_wave, get_watermarked_videos, get_waves, get_waves_for_session_album, presigned_urls_for_original_videos, presigned_urls_for_originals, presigned_urls_for_profile_pictures, presigned_urls_for_watermarked, presigned_urls_for_watermarked_videos, 
 )
 
 urlpatterns = [
@@ -19,6 +19,7 @@ urlpatterns = [
     path('custom-users/<int:pk>/', CustomUserDetailView.as_view(), name='custom-user-detail'),
 
     path('photographers/', PhotographerListCreateView.as_view(), name='photographer-list-create'),
+    path('update-photographers/<int:pk>/', PhotographerDetailUpdateView.as_view(), name='photographer-detail-update'),
     path('photographers/<int:pk>/', PhotographerDetailView.as_view(), name='photographer-detail'),
     path('photographer/by_user/<int:user_id>/', PhotographerByUserIdView.as_view(), name='photographer_by_user'),
 
@@ -56,6 +57,7 @@ urlpatterns = [
     path('purchases/photographer/<int:photographer_userId>/', PurchasesByPhotographerView.as_view(), name='purchases-by-photographer'),
     path('purchases/surfer/<int:surfer_userId>/', PurchasesBySurferView.as_view(), name='purchases-by-surfer'),
     path('purchased-items-by-surfer/<int:surfer_id>/', GetPurchasedItemsBySurfer.as_view(), name='get-images-by-surfer-id'),
+    path('purchases/photographer/<str:photographer_name>/', GetPurchasesByPhotographerName.as_view(), name='get-purchases-by-photographer-name'),
 
 
     path('messages/', MessageListCreateView.as_view(), name='message-list-create'),
@@ -92,6 +94,7 @@ urlpatterns = [
 
 
     path('api/create_images_and_waves/', create_images_and_waves, name='create_images_and_waves'),
+    path('create-multuple-videos/', create_videos, name='create-multuple-videos'),
 
     path('create_videos/', CreateVideosView.as_view(), name='create_videos'),
     path('videos/original/<int:session_album_id>/', get_original_videos, name='get_original_videos'),

@@ -6,6 +6,8 @@ from django.template import RequestContext
 from rest_framework import generics , status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
+from base.pagination import CustomPageNumberPagination
 from .models import AlbumsPrices, AlbumsPricesForVideos, Chat, CustomUser, Message, Photographer, Purchase, PurchaseItem, Spot, SessionAlbum, Img, SpotLike, Follower, Video, Wave
 from .serializers import  AlbumsPricesForVideosSerializer, AlbumsPricesSerializer, ChatSerializer, CustomUserSerializer, MessageSerializer, MyTokenObtainPairSerializer, PhotographerSerializer, PurchaseItemSerializer, PurchaseSerializer, SessionAlbumByPhotographerSerializer, SessionAlbumBySpotSerializer, SessionAlbumWithDetailsSerializer, SpotSerializer, SessionAlbumSerializer, ImgSerializer, SpotLikeSerializer, FollowerSerializer, VideoSerializer, WaveSerializer
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
@@ -42,18 +44,41 @@ class PhotographerListCreateView(generics.ListCreateAPIView):
         user.save()
 
 
+class PhotographerDetailUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = Photographer.objects.all()
+    serializer_class = PhotographerSerializer
+
+    def perform_update(self, serializer):
+        photographer = serializer.save()
+
+        
+
 class PhotographerDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Photographer.objects.all()  # Add this line
+    queryset = Photographer.objects.all()
     serializer_class = PhotographerSerializer
 
     def get(self, request, *args, **kwargs):
         photographer = self.get_object()
+
+        # Get the photographer's full name and follower count
         photographer_name = photographer.user.get_full_name()
         followers_count = Follower.objects.filter(photographer=photographer).count()
+
+        # Get the count of SessionAlbums associated with the photographer
+        session_album_count = SessionAlbum.objects.filter(photographer=photographer).count()
+
+        # Get the count of unique Spots associated with the photographer's SessionAlbums
+        unique_spots_count = SessionAlbum.objects.filter(photographer=photographer).values('spot').distinct().count()
+
+        # Serialize the photographer data
         serializer = self.get_serializer(photographer)
         data = serializer.data
+
+        # Add additional data to the response
         data['photographer_name'] = photographer_name
         data['followers_count'] = followers_count
+        data['session_album_count'] = session_album_count
+        data['unique_spots_count'] = unique_spots_count
 
         return Response(data, status=status.HTTP_200_OK)
 
@@ -70,12 +95,26 @@ class PhotographerByUserIdView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         user_id = self.kwargs['user_id']
         photographer = get_object_or_404(Photographer, user__id=user_id)
+
+        # Get the photographer's full name and follower count
         photographer_name = photographer.user.get_full_name()
         followers_count = Follower.objects.filter(photographer=photographer).count()
+
+        # Get the count of SessionAlbums associated with the photographer
+        session_album_count = SessionAlbum.objects.filter(photographer=photographer).count()
+
+        # Get the count of unique Spots associated with the photographer's SessionAlbums
+        unique_spots_count = SessionAlbum.objects.filter(photographer=photographer).values('spot').distinct().count()
+
+        # Serialize the photographer data
         serializer = self.get_serializer(photographer)
         data = serializer.data
+
+        # Add additional data to the response
         data['photographer_name'] = photographer_name
         data['followers_count'] = followers_count
+        data['session_album_count'] = session_album_count
+        data['unique_spots_count'] = unique_spots_count
 
         return Response(data, status=status.HTTP_200_OK)
 
@@ -209,8 +248,14 @@ class CreatePurchaseWithImagesView(APIView):
             # Extract purchase data
             purchase_data = {
                 "photographer": request.data.get('photographer_id'),
-                "surfer": request.data.get('surfer_id'),
+                "photographer_name": request.data.get('photographer_name'),
+                "sessDate": request.data.get('sessDate'),
                 "SessionAlbum": request.data.get('session_album_id'),
+                "spot_name": request.data.get('spot_name'),
+                "surfer": request.data.get('surfer_id'),
+                "surfer_name": request.data.get('surfer_name'),
+                "total_item_quantity": request.data.get('total_item_quantity'),
+                "total_price": request.data.get('total_price'),
             }
             purchase_serializer = PurchaseSerializer(data=purchase_data)
             
@@ -237,7 +282,7 @@ class CreatePurchaseWithImagesView(APIView):
         
         except Img.DoesNotExist:
             return Response({"error": "Image not found"}, status=status.HTTP_404_NOT_FOUND)
-        
+
 
 class CreatePurchaseWithVideosView(APIView):
     def post(self, request, *args, **kwargs):
@@ -245,8 +290,14 @@ class CreatePurchaseWithVideosView(APIView):
             # Extract purchase data
             purchase_data = {
                 "photographer": request.data.get('photographer_id'),
-                "surfer": request.data.get('surfer_id'),
+                "photographer_name": request.data.get('photographer_name'),
+                "sessDate": request.data.get('sessDate'),
                 "SessionAlbum": request.data.get('session_album_id'),
+                "spot_name": request.data.get('spot_name'),
+                "surfer": request.data.get('surfer_id'),
+                "surfer_name": request.data.get('surfer_name'),
+                "total_item_quantity": request.data.get('total_item_quantity'),
+                "total_price": request.data.get('total_price'),
             }
             purchase_serializer = PurchaseSerializer(data=purchase_data)
             
@@ -273,19 +324,22 @@ class CreatePurchaseWithVideosView(APIView):
         
         except Video.DoesNotExist:
             return Response({"error": "Video not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-
 
 
 
 class CreatePurchaseWithWavesView(APIView):
     def post(self, request, *args, **kwargs):
         try:
-            # Extract purchase data
+            # Extract purchase data with additional fields
             purchase_data = {
                 "photographer": request.data.get('photographer_id'),
-                "surfer": request.data.get('surfer_id'),
+                "photographer_name": request.data.get('photographer_name'),
+                "sessDate": request.data.get('sessDate'),
                 "SessionAlbum": request.data.get('session_album_id'),
+                "spot_name": request.data.get('spot_name'),
+                "surfer": request.data.get('surfer_id'),
+                "surfer_name": request.data.get('surfer_name'),
+                "total_price": request.data.get('total_price'),
             }
             purchase_serializer = PurchaseSerializer(data=purchase_data)
             
@@ -293,7 +347,7 @@ class CreatePurchaseWithWavesView(APIView):
             if purchase_serializer.is_valid():
                 purchase = purchase_serializer.save()
 
-                # Extract wave IDs
+                # Extract wave IDs and initialize total_item_quantity
                 wave_ids = request.data.get('wave_ids', [])
                 total_item_quantity = 0
                 
@@ -324,6 +378,7 @@ class CreatePurchaseWithWavesView(APIView):
             return Response({"error": "Wave not found"}, status=status.HTTP_404_NOT_FOUND)
         except Img.DoesNotExist:
             return Response({"error": "Image not found"}, status=status.HTTP_404_NOT_FOUND)
+
         
 
 
@@ -412,6 +467,48 @@ class GetPurchasedItemsBySurfer(APIView):
         
 
 
+
+
+class GetPurchasesByPhotographerName(APIView):
+    def get(self, request, photographer_name):
+        try:
+            # Filter purchases by photographer_name
+            purchases = Purchase.objects.filter(photographer_name=photographer_name)
+
+            if not purchases.exists():
+                return Response({"error": "No purchases found for this photographer"}, status=status.HTTP_404_NOT_FOUND)
+
+            purchase_list = []
+
+            for purchase in purchases:
+                # Format dates
+                formatted_order_date = purchase.order_date.strftime('%Y-%m-%d') if purchase.order_date else ''
+                formatted_sess_date = purchase.sessDate.strftime('%Y-%m-%d') if purchase.sessDate else ''
+                
+                purchase_data = {
+                    'id': purchase.id,
+                    'photographer_id': purchase.photographer.id,
+                    'surfer_id': purchase.surfer.id,
+                    'order_date': formatted_order_date,
+                    'total_price': purchase.total_price,
+                    'total_item_quantity': purchase.total_item_quantity,
+                    'session_album_id': purchase.SessionAlbum.id if purchase.SessionAlbum else None,
+                    'spot_name': purchase.spot_name,
+                    'photographer_name': purchase.photographer_name,
+                    'surfer_name': purchase.surfer_name,
+                    'sessDate': formatted_sess_date,
+                }
+                purchase_list.append(purchase_data)
+
+            return Response(purchase_list, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
 class PurchasesByPhotographerView(generics.ListAPIView):
     serializer_class = PurchaseSerializer
 
@@ -476,11 +573,13 @@ class ChatDetailView(generics.RetrieveUpdateDestroyAPIView):
 class SessionAlbumListAPIView(generics.ListAPIView):
     queryset = SessionAlbum.objects.all()
     serializer_class = SessionAlbumWithDetailsSerializer
+    pagination_class = CustomPageNumberPagination
 
 
 
 class SessionAlbumByPhotographer(generics.ListAPIView):
     serializer_class = SessionAlbumByPhotographerSerializer
+    pagination_class = CustomPageNumberPagination
 
     def get_queryset(self):
         photographer_id = self.kwargs['photographer_id']  # Assuming the photographer_id is passed as a URL parameter
@@ -490,6 +589,7 @@ class SessionAlbumByPhotographer(generics.ListAPIView):
 
 class SessionAlbumBySpot(generics.ListAPIView):
     serializer_class = SessionAlbumBySpotSerializer
+    pagination_class = CustomPageNumberPagination
 
     def get_queryset(self):
         spot_id = self.kwargs['spot_id']  # Assuming the spot_id is passed as a URL parameter
@@ -658,7 +758,7 @@ def get_batch_presigned_urlssss(request):
         presigned_url = s3.generate_presigned_url(
             'put_object',
             Params={'Bucket': 'surfingram', 'Key': unique_filename},  # Customize Key as needed
-            ExpiresIn=36000  # URL expiration time in seconds
+            ExpiresIn=360000  # URL expiration time in seconds
         )
         presigned_urls.append(presigned_url)
     
@@ -688,7 +788,7 @@ def presigned_urls_for_originals(request):
         presigned_url = s3.generate_presigned_url(
             'put_object',
             Params={'Bucket': 'surfingram', 'Key': unique_filename},  # Customize Key as needed
-            ExpiresIn=36000  # URL expiration time in seconds
+            ExpiresIn=360000  # URL expiration time in seconds
         )
         presigned_urls.append(presigned_url)
     
@@ -718,7 +818,7 @@ def presigned_urls_for_watermarked(request):
         presigned_url = s3.generate_presigned_url(
             'put_object',
             Params={'Bucket': 'surfingram-watermarked', 'Key': unique_filename},  # Customize Key as needed
-            ExpiresIn=36000  # URL expiration time in seconds
+            ExpiresIn=360000  # URL expiration time in seconds
         )
         presigned_urls.append(presigned_url)
     
@@ -748,8 +848,8 @@ def presigned_urls_for_original_videos(request):
         
         presigned_url = s3.generate_presigned_url(
             'put_object',
-            Params={'Bucket': 'surfingram', 'Key': unique_filename},  # Customize Key as needed
-            ExpiresIn=36000  # URL expiration time in seconds
+            Params={'Bucket': 'surfingram-original-video', 'Key': unique_filename},  # Customize Key as needed
+            ExpiresIn=360000  # URL expiration time in seconds
         )
         presigned_urls.append(presigned_url)
     
@@ -778,8 +878,8 @@ def presigned_urls_for_watermarked_videos(request):
         
         presigned_url = s3.generate_presigned_url(
             'put_object',
-            Params={'Bucket': 'surfingram-watermarked', 'Key': unique_filename},  # Customize Key as needed
-            ExpiresIn=36000  # URL expiration time in seconds
+            Params={'Bucket': 'surfingram-transformed-video', 'Key': unique_filename},  # Customize Key as needed
+            ExpiresIn=360000  # URL expiration time in seconds
         )
         presigned_urls.append(presigned_url)
     
@@ -812,7 +912,7 @@ def presigned_urls_for_profile_pictures(request):
         presigned_url = s3.generate_presigned_url(
             'put_object',
             Params={'Bucket': 'surfingram-profile-images', 'Key': unique_filename},  # Customize Key as needed
-            ExpiresIn=36000  # URL expiration time in seconds
+            ExpiresIn=360000  # URL expiration time in seconds
         )
         presigned_urls.append(presigned_url)
     
@@ -826,55 +926,152 @@ from io import BytesIO
 from functools import lru_cache
 
 
+
+
+@api_view(['POST'])
+def create_videos(request):
+    video_urls = request.data.get('video', [])
+    watermarked_video_urls = request.data.get('WatermarkedVideo', [])
+    img_urls = request.data.get('img', [])
+    session_album_id = request.data.get('SessionAlbum')
+
+    # Validate SessionAlbum ID
+    if not session_album_id:
+        return Response({"error": "SessionAlbum ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Validate that the number of URLs match
+    if len(video_urls) != len(watermarked_video_urls) or len(video_urls) != len(img_urls):
+        return Response({"error": "The number of videos, watermarked videos, and images must be the same"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Try to retrieve the SessionAlbum
+    try:
+        session_album = SessionAlbum.objects.get(id=session_album_id)
+    except SessionAlbum.DoesNotExist:
+        return Response({"error": "SessionAlbum not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    # Save the data in a new way, for example, by creating individual video entries
+    created_videos = []
+    for video_url, watermarked_video_url, img_url in zip(video_urls, watermarked_video_urls, img_urls):
+        try:
+            video = Video.objects.create(
+                video=video_url,
+                WatermarkedVideo=watermarked_video_url,
+                img=img_url,
+                SessionAlbum=session_album
+            )
+            created_videos.append(video)
+        except Exception as e:
+            # Return an error if something goes wrong
+            return Response({"error": "An error occurred while saving the videos"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # Return the created video details
+    return Response({
+        "message": "Videos created successfully",
+        "created_videos": [video.id for video in created_videos]
+    }, status=status.HTTP_201_CREATED)
+
+    
+from django.utils.dateparse import parse_datetime
+
+from datetime import datetime, timedelta
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Img, Wave, SessionAlbum
+
 @api_view(['POST'])
 def create_images_and_waves(request):
     original_urls = request.data.get('original_urls', [])
     watermarked_urls = request.data.get('watermarked_urls', [])
     session_album_id = request.data.get('session_album')
+    exif_dates = request.data.get('exif_dates', [])
 
+    # Validate that URL lists are the same length
     if len(original_urls) != len(watermarked_urls):
-        return Response({'error': 'Mismatched number of original and watermarked URLs'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Mismatched number of URLs'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if all EXIF dates are "null"
+    if all(exif_date == "null" for exif_date in exif_dates):
+        # If all EXIF dates are "null", create images with wave = null
+        images_to_create = [
+            Img(photo=original_url, WatermarkedPhoto=watermarked_url, SessionAlbum_id=session_album_id)
+            for original_url, watermarked_url in zip(original_urls, watermarked_urls)
+        ]
+        Img.objects.bulk_create(images_to_create)
+        
+        # Mark the SessionAlbum as active but not divided into waves
+        session_album = SessionAlbum.objects.get(id=session_album_id)
+        session_album.dividedToWaves = False
+        session_album.active = True
+        session_album.save()
+
+        return Response({'message': 'Images created successfully without waves'}, status=status.HTTP_201_CREATED)
 
     images_and_waves = []
     current_wave = None
     previous_datetime = None
-
     TIME_GAP_THRESHOLD = 5  # seconds
 
+    # Lists to keep track of images without EXIF data
+    no_exif_images = []
+
     try:
-        for original_url, watermarked_url in zip(original_urls, watermarked_urls):
-            datetime_original = get_datetime_original_from_image(original_url)
-            print(datetime_original)
+        for i, (original_url, watermarked_url) in enumerate(zip(original_urls, watermarked_urls)):
+            exif_date = exif_dates[i] if i < len(exif_dates) else None
 
-            if datetime_original:
-                if not current_wave or (datetime_original - previous_datetime) > timedelta(seconds=TIME_GAP_THRESHOLD):
-                    current_wave = create_wave(session_album_id, watermarked_url)
-                    previous_datetime = datetime_original
+            if exif_date != "null":
+                try:
+                    # Convert EXIF date string to datetime object
+                    datetime_original = datetime.strptime(exif_date, "%Y:%m:%d %H:%M:%S")
+                except ValueError:
+                    datetime_original = None
 
-                images_and_waves.append((original_url, watermarked_url, current_wave))
+                if datetime_original:
+                    # Handle images with EXIF data
+                    if not current_wave or (datetime_original - previous_datetime) > timedelta(seconds=TIME_GAP_THRESHOLD):
+                        current_wave = create_wave(session_album_id, watermarked_url)
+                        previous_datetime = datetime_original
+
+                    images_and_waves.append((original_url, watermarked_url, current_wave))
+                else:
+                    # If datetime conversion fails, treat it as no EXIF data
+                    no_exif_images.append((original_url, watermarked_url))
             else:
-                print(f"Skipping image {original_url} due to missing DateTimeOriginal.")
-        
+                # Handle images without EXIF data
+                no_exif_images.append((original_url, watermarked_url))
+
+        # Process images with EXIF data
         if images_and_waves:
             create_images(images_and_waves)
-        else:
-            raise Exception("No images to create waves.")
+        
+        # Process images without EXIF data
+        if no_exif_images:
+            for original_url, watermarked_url in no_exif_images:
+                wave = create_wave(session_album_id, watermarked_url)
+                create_images([(original_url, watermarked_url, wave)])
+        
+        # Mark the SessionAlbum as active and dividedToWaves as True after successful processing
+        session_album = SessionAlbum.objects.get(id=session_album_id)
+        session_album.dividedToWaves = True
+        session_album.active = True
+        session_album.save()
 
         return Response({'message': 'Images and Waves created successfully'}, status=status.HTTP_201_CREATED)
 
     except Exception as e:
         print(f"Error creating waves: {e}")
-        # Create images without waves
+
+        # Create images without waves in case of an error
         images_to_create = [
             Img(photo=original_url, WatermarkedPhoto=watermarked_url, SessionAlbum_id=session_album_id)
             for original_url, watermarked_url in zip(original_urls, watermarked_urls)
         ]
         Img.objects.bulk_create(images_to_create)
 
-        # Update the session album to set dividedToWaves to True
+        # Update the session album to set dividedToWaves to False if an error occurred
         try:
             session_album = SessionAlbum.objects.get(id=session_album_id)
-            session_album.dividedToWaves = True
+            session_album.dividedToWaves = False  # Set to False if any error occurs
             session_album.save()
         except SessionAlbum.DoesNotExist:
             print(f"SessionAlbum with id {session_album_id} does not exist.")
@@ -891,6 +1088,8 @@ def create_images(images_and_waves):
         for original_url, watermarked_url, wave in images_and_waves
     ]
     Img.objects.bulk_create(images_to_create)
+
+
 
 @lru_cache(maxsize=1000000)
 def get_datetime_original_from_image(url):
@@ -924,15 +1123,20 @@ def get_datetime_original_from_image(url):
 
 
 class GetImagesBySessionAlbumView(APIView):
+    pagination_class = CustomPageNumberPagination
+
     def get(self, request, session_album_id):
         try:
             session_album = SessionAlbum.objects.get(id=session_album_id)
             images = Img.objects.filter(SessionAlbum=session_album)
-            serializer = ImgSerializer(images, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+
+            paginator = self.pagination_class()
+            paginated_images = paginator.paginate_queryset(images, request)
+
+            serializer = ImgSerializer(paginated_images, many=True)
+            return paginator.get_paginated_response(serializer.data)
         except SessionAlbum.DoesNotExist:
             return Response({'error': 'SessionAlbum not found'}, status=status.HTTP_404_NOT_FOUND)
-
 
 
 
@@ -972,8 +1176,17 @@ class CreateVideosView(APIView):
 def get_waves_for_session_album(request, session_album_id):
     try:
         waves = Wave.objects.filter(session_album=session_album_id)
-        serializer = WaveSerializer(waves, many=True)
-        return Response(serializer.data)
+        
+        # Paginate the queryset
+        paginator = CustomPageNumberPagination()
+        paginated_waves = paginator.paginate_queryset(waves, request)
+        
+        # Serialize the paginated data
+        serializer = WaveSerializer(paginated_waves, many=True)
+        
+        # Return the paginated response
+        return paginator.get_paginated_response(serializer.data)
+    
     except Wave.DoesNotExist:
         return Response({'message': 'No waves found for the provided SessionAlbum ID.'}, status=status.HTTP_404_NOT_FOUND)
     
@@ -1057,8 +1270,12 @@ def get_watermarked_videos(request, session_album_id):
 def get_videos_by_session(request, session_album_id):
     session_album = get_object_or_404(SessionAlbum, id=session_album_id)
     videos = Video.objects.filter(SessionAlbum=session_album)
-    serializer = VideoSerializer(videos, many=True)
-    return Response(serializer.data)
+
+    paginator = CustomPageNumberPagination()
+    paginated_videos = paginator.paginate_queryset(videos, request)
+
+    serializer = VideoSerializer(paginated_videos, many=True)
+    return paginator.get_paginated_response(serializer.data)
 
 
 

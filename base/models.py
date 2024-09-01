@@ -98,6 +98,7 @@ class SessionAlbum(models.Model):
     cover_image = models.CharField(max_length=255, null=True, blank=True)
     videos = models.BooleanField(default=False)
     dividedToWaves = models.BooleanField( null=True)
+    active = models.BooleanField(default=False)
 
 
 class Wave(models.Model):
@@ -154,9 +155,13 @@ class Purchase(models.Model):
     photographer = models.ForeignKey(Photographer, on_delete=models.CASCADE, related_name='purchases_as_photographer')
     surfer = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='purchases_as_surfer')
     order_date = models.DateTimeField(auto_now_add=True)
-    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
     total_item_quantity = models.IntegerField( null=True, blank=True)
     SessionAlbum = models.ForeignKey(SessionAlbum, on_delete=models.CASCADE,null=True, blank=True)
+    spot_name = models.CharField(max_length=255, null=True, blank=True)
+    photographer_name = models.CharField(max_length=255, null=True, blank=True)
+    surfer_name = models.CharField(max_length=255, null=True, blank=True)
+    sessDate = models.DateTimeField(null=True)
 
 
     def __str__(self):
