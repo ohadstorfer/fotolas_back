@@ -12,6 +12,7 @@ from .models import AlbumsPrices, AlbumsPricesForVideos, Chat, CustomUser, Messa
 from .serializers import  AlbumsPricesForVideosSerializer, AlbumsPricesSerializer, ChatSerializer, CustomUserSerializer, MessageSerializer, MyTokenObtainPairSerializer, PhotographerSerializer, PurchaseItemSerializer, PurchaseSerializer, SessionAlbumByPhotographerSerializer, SessionAlbumBySpotSerializer, SessionAlbumWithDetailsSerializer, SpotSerializer, SessionAlbumSerializer, ImgSerializer, SpotLikeSerializer, FollowerSerializer, VideoSerializer, WaveSerializer
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
@@ -26,6 +27,12 @@ class CustomUserDetailView(RetrieveUpdateDestroyAPIView):
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
+
+
+
+
+
+
 
 
 
@@ -574,6 +581,13 @@ class SessionAlbumListAPIView(generics.ListAPIView):
     queryset = SessionAlbum.objects.all()
     serializer_class = SessionAlbumWithDetailsSerializer
     pagination_class = CustomPageNumberPagination
+
+
+
+class SessionAlbumDetailByIDAPIView(generics.RetrieveAPIView):
+    queryset = SessionAlbum.objects.all()
+    serializer_class = SessionAlbumWithDetailsSerializer
+    lookup_field = 'id'
 
 
 

@@ -3,7 +3,7 @@ from django import views
 from django.urls import path
 from .views import (
      AlbumsPricesBySess, AlbumsPricesDetailView, AlbumsPricesForVideosBySess, AlbumsPricesForVideosDetailView, AlbumsPricesForVideosListCreateView, AlbumsPricesListCreateView, ChatDetailView, ChatListCreateView, CreatePurchaseWithImagesView, CreatePurchaseWithVideosView, CreatePurchaseWithWavesView, CreateVideosView, CustomUserListCreateView, CustomUserDetailView, FollowersByPhotographerListView, FollowersByUserListView,  GetImagesBySessionAlbumView, GetPurchasedItemsBySurfer, GetPurchasesByPhotographerName, MessageDetailView, MessageListCreateView, MyTokenObtainPairView, PhotographerByUserIdView, PhotographerDetailUpdateView, 
-    PhotographerListCreateView, PhotographerDetailView, PurchaseDetailView, PurchaseItemDetailView, PurchaseItemListCreateView, PurchaseListCreateView, PurchasesByPhotographerView, PurchasesBySurferView, SessionAlbumByPhotographer, SessionAlbumBySpot, SessionAlbumListAPIView, SpotLikesBySpotListView, SpotLikesByUserListView,
+    PhotographerListCreateView, PhotographerDetailView, PurchaseDetailView, PurchaseItemDetailView, PurchaseItemListCreateView, PurchaseListCreateView, PurchasesByPhotographerView, PurchasesBySurferView, SessionAlbumByPhotographer, SessionAlbumBySpot, SessionAlbumDetailByIDAPIView, SessionAlbumListAPIView, SpotLikesBySpotListView, SpotLikesByUserListView,
     SpotListCreateView, SpotDetailView,
     SessionAlbumListCreateView, SessionAlbumDetailView,
     ImgListCreateView, ImgDetailView,
@@ -17,6 +17,7 @@ urlpatterns = [
     
     path('custom-users/', CustomUserListCreateView.as_view(), name='custom-user-list-create'),
     path('custom-users/<int:pk>/', CustomUserDetailView.as_view(), name='custom-user-detail'),
+    path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
 
     path('photographers/', PhotographerListCreateView.as_view(), name='photographer-list-create'),
     path('update-photographers/<int:pk>/', PhotographerDetailUpdateView.as_view(), name='photographer-detail-update'),
@@ -66,11 +67,11 @@ urlpatterns = [
     path('chats/', ChatListCreateView.as_view(), name='chat-list-create'),
     path('chats/<int:pk>/', ChatDetailView.as_view(), name='chat-detail'),
 
-    path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
 
 
 
     path('session-albums-with-details/', SessionAlbumListAPIView.as_view(), name='session-album-list'),
+    path('session-albums-with-details-by-id/<int:id>/', SessionAlbumDetailByIDAPIView.as_view(), name='session-albums-with-details-by-id'),
     path('session-albums-by-photographer/<int:photographer_id>/', SessionAlbumByPhotographer.as_view(), name='session-album-by-photographer'),
     path('session-albums-by-spot/<int:spot_id>/', SessionAlbumBySpot.as_view(), name='session-album-by-spot'),
 

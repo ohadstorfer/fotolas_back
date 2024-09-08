@@ -13,6 +13,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['email'] = user.email
         token['fullName'] = user.fullName
         token['id'] = user.id
+        token['is_photographer'] = user.is_photographer
         return token
 
     def validate(self, attrs):
@@ -22,6 +23,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             data['email'] = self.user.email
             data['fullName'] = self.user.fullName
             data['id'] = self.user.id
+            data['is_photographer'] = self.user.is_photographer
 
             return data
 
