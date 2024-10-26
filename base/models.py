@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
 from django.db import models
@@ -97,8 +98,25 @@ class SessionAlbum(models.Model):
     photographer = models.ForeignKey(Photographer, on_delete=models.CASCADE)
     cover_image = models.CharField(max_length=255, null=True, blank=True)
     videos = models.BooleanField(default=False)
-    dividedToWaves = models.BooleanField( null=True)
+    dividedToWaves = models.BooleanField(null=True)
     active = models.BooleanField(default=False)
+    expiration_date = models.DateTimeField(null=True, blank=True)
+
+    def set_expiration_date(self):
+        if self.videos:
+            self.expiration_date = self.created_at + timedelta(days=5)
+        else:
+            self.expiration_date = self.created_at + timedelta(days=30)
+        self.save()
+
+    def is_active(self):
+        if self.expiration_date and self.expiration_date < timezone.now():
+            self.active = False
+            self.save()
+        return self.active
+
+
+
 
 
 class Wave(models.Model):
@@ -127,10 +145,9 @@ class Video(models.Model):
 
 class AlbumsPrices(models.Model):
     session_album = models.ForeignKey(SessionAlbum, on_delete=models.CASCADE)
-    price_1_to_5 = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    price_6_to_20 = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    price_21_to_50 = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    price_51_plus = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    price_1_to_5 = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
+    price_6_to_50 = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
+    price_51_plus = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
 
     def __str__(self):
         return f'AlbumsPrices - Session Album: {self.session_album.id}'
@@ -138,13 +155,35 @@ class AlbumsPrices(models.Model):
 
 class AlbumsPricesForVideos(models.Model):
     session_album = models.ForeignKey(SessionAlbum, on_delete=models.CASCADE)
-    price_1_to_5 = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    price_6_to_15 = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    price_16_plus = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    price_1_to_3 = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
+    price_4_to_15 = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
+    price_16_plus = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
 
     def __str__(self):
         return f'AlbumsPrices - Session Album: {self.session_album.id}'
-    
+
+
+
+
+
+class DefaultAlbumsPricesForImages(models.Model):
+    photographer = models.ForeignKey(Photographer, on_delete=models.CASCADE)
+    price_1_to_5 = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
+    price_6_to_50 = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
+    price_51_plus = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
+
+    def __str__(self):
+        return f'DefaultAlbumsPricesForImages - photographer: {self.photographer.id}'
+
+
+class DefaultAlbumsPricesForVideos(models.Model):
+    photographer = models.ForeignKey(Photographer, on_delete=models.CASCADE)
+    price_1_to_3 = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
+    price_4_to_15 = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
+    price_16_plus = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
+
+    def __str__(self):
+        return f'DefaultAlbumsPricesForVideos - photographer: {self.photographer.id}'
 
 
 
@@ -173,10 +212,6 @@ class PurchaseItem(models.Model):
     Img = models.ForeignKey(Img, on_delete=models.CASCADE, related_name='Img', null=True, blank=True)
     Video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='Video', null=True, blank=True)
     
-
-    # def __str__(self):
-    #     return f'Purchase Item {self.id} - {self.order.user}'
-
 
 
 

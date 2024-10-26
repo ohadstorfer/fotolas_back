@@ -2,14 +2,15 @@
 from django import views
 from django.urls import path
 from .views import (
-     AlbumsPricesBySess, AlbumsPricesDetailView, AlbumsPricesForVideosBySess, AlbumsPricesForVideosDetailView, AlbumsPricesForVideosListCreateView, AlbumsPricesListCreateView, ChatDetailView, ChatListCreateView, CreatePurchaseWithImagesView, CreatePurchaseWithVideosView, CreatePurchaseWithWavesView, CreateVideosView, CustomUserListCreateView, CustomUserDetailView, FollowersByPhotographerListView, FollowersByUserListView,  GetImagesBySessionAlbumView, GetPurchasedItemsBySurfer, GetPurchasesByPhotographerName, MessageDetailView, MessageListCreateView, MyTokenObtainPairView, PhotographerByUserIdView, PhotographerDetailUpdateView, 
+     AlbumsPricesBySess, AlbumsPricesDetailView, AlbumsPricesForVideosBySess, AlbumsPricesForVideosDetailView, AlbumsPricesForVideosListCreateView, AlbumsPricesListCreateView, ChatDetailView, ChatListCreateView, CreatePurchaseWithImagesView, CreatePurchaseWithVideosView, CreatePurchaseWithWavesView, CreateVideosView, CustomUserListCreateView, CustomUserDetailView, FollowersByPhotographerListView, FollowersByUserListView,  GetImagesBySessionAlbumView, GetPurchasedItemsBySurfer, GetPurchasesByPhotographerName, MessageDetailView, MessageListCreateView, MyTokenObtainPairView, PasswordResetRequestView, PasswordResetView, PhotographerByUserIdView, PhotographerDetailUpdateView, 
     PhotographerListCreateView, PhotographerDetailView, PurchaseDetailView, PurchaseItemDetailView, PurchaseItemListCreateView, PurchaseListCreateView, PurchasesByPhotographerView, PurchasesBySurferView, SessionAlbumByPhotographer, SessionAlbumBySpot, SessionAlbumDetailByIDAPIView, SessionAlbumListAPIView, SpotLikesBySpotListView, SpotLikesByUserListView,
     SpotListCreateView, SpotDetailView,
     SessionAlbumListCreateView, SessionAlbumDetailView,
     ImgListCreateView, ImgDetailView,
     SpotLikeListCreateView, SpotLikeDetailView,
-    FollowerListCreateView, FollowerDetailView,
-    create_images_and_waves, create_videos, get_batch_presigned_urlssss, get_images_for_multiple_waves, get_images_for_wave, get_original_videos, get_videos_by_session, get_watermarked_photos_by_wave, get_watermarked_videos, get_waves, get_waves_for_session_album, presigned_urls_for_original_videos, presigned_urls_for_originals, presigned_urls_for_profile_pictures, presigned_urls_for_watermarked, presigned_urls_for_watermarked_videos, 
+    FollowerListCreateView, FollowerDetailView, ValidateTokenView,
+    DefaultAlbumsPricesForImagesCreateView, DefaultAlbumsPricesForImagesUpdateView, DefaultAlbumsPricesForImagesListView,  DefaultAlbumsPricesForVideosCreateView, DefaultAlbumsPricesForVideosUpdateView, DefaultAlbumsPricesForVideosListView,
+    create_images_and_waves, create_videos, get_batch_presigned_urlssss, get_images_for_multiple_waves, get_images_for_wave, DeactivateSessionAlbum,  get_original_videos, get_videos_by_session, get_watermarked_photos_by_wave, get_watermarked_videos, get_waves, get_waves_for_session_album, presigned_urls_for_original_videos, presigned_urls_for_originals, presigned_urls_for_profile_pictures, presigned_urls_for_watermarked, presigned_urls_for_watermarked_videos, 
 )
 
 urlpatterns = [
@@ -18,6 +19,9 @@ urlpatterns = [
     path('custom-users/', CustomUserListCreateView.as_view(), name='custom-user-list-create'),
     path('custom-users/<int:pk>/', CustomUserDetailView.as_view(), name='custom-user-detail'),
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('validate-token/', ValidateTokenView.as_view(), name='validate-token'),
+    path('password-reset-request/', PasswordResetRequestView.as_view(), name='password-reset-request'),
+    path('password-reset/', PasswordResetView.as_view(), name='password-reset'),
 
     path('photographers/', PhotographerListCreateView.as_view(), name='photographer-list-create'),
     path('update-photographers/<int:pk>/', PhotographerDetailUpdateView.as_view(), name='photographer-detail-update'),
@@ -74,6 +78,8 @@ urlpatterns = [
     path('session-albums-with-details-by-id/<int:id>/', SessionAlbumDetailByIDAPIView.as_view(), name='session-albums-with-details-by-id'),
     path('session-albums-by-photographer/<int:photographer_id>/', SessionAlbumByPhotographer.as_view(), name='session-album-by-photographer'),
     path('session-albums-by-spot/<int:spot_id>/', SessionAlbumBySpot.as_view(), name='session-album-by-spot'),
+    path('session-album/deactivate/<int:session_album_id>/', DeactivateSessionAlbum.as_view(), name='deactivate-session-album'),
+
 
 
     path('albums_prices/', AlbumsPricesListCreateView.as_view(), name='albums-prices-list-create'),
@@ -84,7 +90,13 @@ urlpatterns = [
     path('albums_prices-for-videos/<int:pk>/', AlbumsPricesForVideosDetailView.as_view(), name='albums-prices-detail'),
     path('albums-prices-for-videos-by-sess/<int:session_album_id>/', AlbumsPricesForVideosBySess.as_view(), name='albums-prices-by-sess'),
 
-  
+    path('default-album-prices/images/', DefaultAlbumsPricesForImagesCreateView.as_view(), name='create_default_album_prices_images'),
+    path('default-album-prices-update/images/photographer/<int:photographer_id>/', DefaultAlbumsPricesForImagesUpdateView.as_view(), name='update_default_album_prices_images_by_photographer'),
+    path('default-album-prices/images/photographer/<int:photographer_id>/', DefaultAlbumsPricesForImagesListView.as_view(), name='list_default_album_prices_images'),
+
+    path('default-album-prices/videos/', DefaultAlbumsPricesForVideosCreateView.as_view(), name='create_default_album_prices_videos'),
+    path('default-album-prices-update/videos/<int:photographer_id>/', DefaultAlbumsPricesForVideosUpdateView.as_view(), name='update_default_album_prices_videos'),
+    path('default-album-prices/videos/photographer/<int:photographer_id>/', DefaultAlbumsPricesForVideosListView.as_view(), name='list_default_album_prices_videos'),
 
     path('api/get_batch_presigned_urlssss', get_batch_presigned_urlssss, name='get_batch_presigned_urlssss'),
     path('presigned_urls_for_originals', presigned_urls_for_originals, name='presigned_urls_for_originals'),

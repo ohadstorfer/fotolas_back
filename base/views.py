@@ -8,12 +8,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from base.pagination import CustomPageNumberPagination
-from .models import AlbumsPrices, AlbumsPricesForVideos, Chat, CustomUser, Message, Photographer, Purchase, PurchaseItem, Spot, SessionAlbum, Img, SpotLike, Follower, Video, Wave
-from .serializers import  AlbumsPricesForVideosSerializer, AlbumsPricesSerializer, ChatSerializer, CustomUserSerializer, MessageSerializer, MyTokenObtainPairSerializer, PhotographerSerializer, PurchaseItemSerializer, PurchaseSerializer, SessionAlbumByPhotographerSerializer, SessionAlbumBySpotSerializer, SessionAlbumWithDetailsSerializer, SpotSerializer, SessionAlbumSerializer, ImgSerializer, SpotLikeSerializer, FollowerSerializer, VideoSerializer, WaveSerializer
+from .models import DefaultAlbumsPricesForImages, DefaultAlbumsPricesForVideos, AlbumsPrices, AlbumsPricesForVideos, Chat, CustomUser, Message, Photographer, Purchase, PurchaseItem, Spot, SessionAlbum, Img, SpotLike, Follower, Video, Wave
+from .serializers import  DefaultAlbumsPricesForImagesSerializer, DefaultAlbumsPricesForVideosSerializer, AlbumsPricesForVideosSerializer, AlbumsPricesSerializer, ChatSerializer, CustomUserSerializer, MessageSerializer, MyTokenObtainPairSerializer, PasswordResetRequestSerializer, PasswordResetSerializer, PhotographerSerializer, PurchaseItemSerializer, PurchaseSerializer, SessionAlbumByPhotographerSerializer, SessionAlbumBySpotSerializer, SessionAlbumWithDetailsSerializer, SpotSerializer, SessionAlbumSerializer, ImgSerializer, SpotLikeSerializer, FollowerSerializer, VideoSerializer, WaveSerializer
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.decorators import api_view
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.exceptions import PermissionDenied
+from django.core.mail import send_mail
 
 
 class CustomUserListCreateView(generics.ListCreateAPIView):
@@ -30,13 +35,73 @@ class MyTokenObtainPairView(TokenObtainPairView):
 
 
 
+class PasswordResetRequestView(APIView):
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            user = CustomUser.objects.get(email=email)
+
+            # Generate a JWT token
+            refresh = RefreshToken.for_user(user)
+            token = str(refresh.access_token)
+
+            # Build reset URL
+            reset_url = f"{settings.FRONTEND_URL}/reset-password/?token={token}"
+
+            # Send reset email
+            send_mail(
+                "Password Reset Request",
+                f"Use this link to reset your password: {reset_url}",
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+            )
+            return Response({"message": "Password reset email sent."}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+
+class PasswordResetView(APIView):
+    def post(self, request):
+        serializer = PasswordResetSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    
+
+@api_view(['POST'])
+def refresh_token(request):
+    refresh_token = request.data.get('refresh')
+    if not refresh_token:
+        return Response({"detail": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        token = RefreshToken(refresh_token)
+        new_access_token = str(token.access_token)
+        return Response({"access": new_access_token}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class ValidateTokenView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = []  # No permissions required to validate token
+
+    def get(self, request):
+        # If the request is authenticated, this method will be called
+        return Response({'valid': True, 'detail': 'Token is valid.'}, status=status.HTTP_200_OK)
 
 
 
 
     
+
 class PhotographerListCreateView(generics.ListCreateAPIView):
     queryset = Photographer.objects.all()
     serializer_class = PhotographerSerializer
@@ -44,11 +109,30 @@ class PhotographerListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         # Call the parent perform_create to save the photographer instance
         photographer = serializer.save()
+        
         # Access the user associated with the photographer
         user = photographer.user
+        
         # Update is_photographer to True
         user.is_photographer = True
         user.save()
+
+        # Create default album prices for images
+        DefaultAlbumsPricesForImages.objects.create(
+            photographer=photographer,
+            price_1_to_5=20,
+            price_6_to_50=25,
+            price_51_plus=30
+        )
+
+        # Create default album prices for videos
+        DefaultAlbumsPricesForVideos.objects.create(
+            photographer=photographer,
+            price_1_to_3=25,
+            price_4_to_15=30,
+            price_16_plus=35
+        )
+
 
 
 class PhotographerDetailUpdateView(generics.RetrieveUpdateAPIView):
@@ -69,10 +153,8 @@ class PhotographerDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         # Get the photographer's full name and follower count
         photographer_name = photographer.user.get_full_name()
-        followers_count = Follower.objects.filter(photographer=photographer).count()
-
         # Get the count of SessionAlbums associated with the photographer
-        session_album_count = SessionAlbum.objects.filter(photographer=photographer).count()
+        session_album_count = SessionAlbum.objects.filter(photographer=photographer, active=True).count()
 
         # Get the count of unique Spots associated with the photographer's SessionAlbums
         unique_spots_count = SessionAlbum.objects.filter(photographer=photographer).values('spot').distinct().count()
@@ -83,7 +165,6 @@ class PhotographerDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         # Add additional data to the response
         data['photographer_name'] = photographer_name
-        data['followers_count'] = followers_count
         data['session_album_count'] = session_album_count
         data['unique_spots_count'] = unique_spots_count
 
@@ -96,35 +177,41 @@ class PhotographerDetailView(generics.RetrieveUpdateDestroyAPIView):
         return obj
 
 
+
+
 class PhotographerByUserIdView(generics.RetrieveAPIView):
     serializer_class = PhotographerSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
+        # Extract the user ID from the token
+        token_user_id = request.user.id
+        # Get the user_id from the request URL
         user_id = self.kwargs['user_id']
+
+        # Ensure the user_id from the URL matches the user from the token
+        if str(token_user_id) != str(user_id):
+            raise PermissionDenied("You are not authorized to view this photographer's details.")
+
+        # Get the photographer object based on the user_id
         photographer = get_object_or_404(Photographer, user__id=user_id)
 
-        # Get the photographer's full name and follower count
+        # Get the photographer's full name and other additional data
         photographer_name = photographer.user.get_full_name()
-        followers_count = Follower.objects.filter(photographer=photographer).count()
-
-        # Get the count of SessionAlbums associated with the photographer
-        session_album_count = SessionAlbum.objects.filter(photographer=photographer).count()
-
-        # Get the count of unique Spots associated with the photographer's SessionAlbums
+        session_album_count = SessionAlbum.objects.filter(photographer=photographer, active=True).count()
         unique_spots_count = SessionAlbum.objects.filter(photographer=photographer).values('spot').distinct().count()
 
         # Serialize the photographer data
         serializer = self.get_serializer(photographer)
         data = serializer.data
 
-        # Add additional data to the response
+        # Add the extra fields
         data['photographer_name'] = photographer_name
-        data['followers_count'] = followers_count
         data['session_album_count'] = session_album_count
         data['unique_spots_count'] = unique_spots_count
 
         return Response(data, status=status.HTTP_200_OK)
-
 
 
 class SpotListCreateView(generics.ListCreateAPIView):
@@ -435,32 +522,36 @@ class GetPurchasedItemsBySurfer(APIView):
         try:
             # Find all Purchases for the given surfer
             purchases = Purchase.objects.filter(surfer_id=surfer_id)
-            purchased_images = {}
-            purchased_videos = {}
+            purchased_images = []
+            purchased_videos = []
 
             for purchase in purchases:
+                # Get the related SessionAlbum and calculate the days left until expiration
+                session_album = purchase.SessionAlbum
+                days_left = None
+                if session_album and session_album.expiration_date:
+                    days_left = (session_album.expiration_date - timezone.now()).days
+
                 purchase_items = PurchaseItem.objects.filter(PurchaseId=purchase.id)
 
                 # Gather images
                 for item in purchase_items:
                     if item.Img:
-                        if purchase.id not in purchased_images:
-                            purchased_images[purchase.id] = []
-                        purchased_images[purchase.id].append({
+                        purchased_images.append({
                             'id': item.Img.id,
                             'photo': item.Img.photo,
                             'WatermarkedPhoto': item.Img.WatermarkedPhoto,
+                            'days_until_expiration': days_left,  # Add days left
                             # Add other fields as necessary
                         })
-                    
+
                     # Gather videos
                     if item.Video:
-                        if purchase.id not in purchased_videos:
-                            purchased_videos[purchase.id] = []
-                        purchased_videos[purchase.id].append({
+                        purchased_videos.append({
                             'id': item.Video.id,
                             'video': item.Video.video,
                             'WatermarkedVideo': item.Video.WatermarkedVideo,
+                            'days_until_expiration': days_left,  # Add days left
                             # Add other fields as necessary
                         })
 
@@ -573,21 +664,54 @@ class ChatDetailView(generics.RetrieveUpdateDestroyAPIView):
     
 
 
-    
+from django.utils import timezone
+from django.db.models import Case, When, F, ExpressionWrapper, DurationField
 
 
 
 class SessionAlbumListAPIView(generics.ListAPIView):
-    queryset = SessionAlbum.objects.all()
     serializer_class = SessionAlbumWithDetailsSerializer
     pagination_class = CustomPageNumberPagination
+
+    def get_queryset(self):
+        now = timezone.now()
+        # Filter for active SessionAlbums and calculate expiration date
+        queryset = SessionAlbum.objects.filter(active=True).annotate(
+            calculated_expiration_date=Case(
+                When(videos=True, then=F('created_at') + timedelta(days=5)),
+                When(videos=False, then=F('created_at') + timedelta(days=30)),
+                default=None
+            )
+        )
+
+        # Calculate remaining days until expiration
+        queryset = queryset.annotate(
+            days_until_expiration=F('calculated_expiration_date') - now
+        ).filter(days_until_expiration__gte=timedelta(days=0)).order_by('-id')
+
+        return queryset
+
+
+
+
 
 
 
 class SessionAlbumDetailByIDAPIView(generics.RetrieveAPIView):
-    queryset = SessionAlbum.objects.all()
     serializer_class = SessionAlbumWithDetailsSerializer
     lookup_field = 'id'
+
+    def get_queryset(self):
+        return SessionAlbum.objects.filter(active=True)
+
+# class SessionAlbumDetailByIDAPIView(generics.RetrieveAPIView):
+#     serializer_class = SessionAlbumWithDetailsSerializer
+#     lookup_field = 'id'
+
+#     def get_queryset(self):
+#         # Ensure the album is active and not expired
+#         return SessionAlbum.objects.filter(active=True, expiration_date__gte=timezone.now())
+
 
 
 
@@ -597,8 +721,22 @@ class SessionAlbumByPhotographer(generics.ListAPIView):
 
     def get_queryset(self):
         photographer_id = self.kwargs['photographer_id']  # Assuming the photographer_id is passed as a URL parameter
-        queryset = SessionAlbum.objects.filter(photographer__id=photographer_id)
-        return queryset
+        now = timezone.now()
+        # Create a queryset that filters active albums for the specified photographer
+        queryset = SessionAlbum.objects.filter(
+            photographer__id=photographer_id,
+            active=True
+        ).annotate(
+            calculated_expiration_date=Case(
+                When(videos=True, then=F('created_at') + timedelta(days=5)),
+                When(videos=False, then=F('created_at') + timedelta(days=30)),
+                default=None
+            )
+        ).filter(calculated_expiration_date__gte=now)  # Filter to ensure sessions are not expired
+        return queryset.order_by('-id')
+
+
+
 
 
 class SessionAlbumBySpot(generics.ListAPIView):
@@ -607,8 +745,48 @@ class SessionAlbumBySpot(generics.ListAPIView):
 
     def get_queryset(self):
         spot_id = self.kwargs['spot_id']  # Assuming the spot_id is passed as a URL parameter
-        queryset = SessionAlbum.objects.filter(spot__id=spot_id)
-        return queryset
+        now = timezone.now()
+        # Create a queryset that filters active albums for the specified spot
+        queryset = SessionAlbum.objects.filter(
+            spot__id=spot_id,
+            active=True
+        ).annotate(
+            calculated_expiration_date=Case(
+                When(videos=True, then=F('created_at') + timedelta(days=5)),
+                When(videos=False, then=F('created_at') + timedelta(days=30)),
+                default=None
+            )
+        ).filter(calculated_expiration_date__gte=now)  # Filter to ensure sessions are not expired
+        return queryset.order_by('-id')
+
+
+
+
+class DeactivateSessionAlbum(generics.UpdateAPIView):
+    queryset = SessionAlbum.objects.all()
+    serializer_class = SessionAlbumSerializer
+    # permission_classes = [IsAuthenticated]  # Ensure only authenticated users can access this view
+
+    def put(self, request, *args, **kwargs):
+        # Get the SessionAlbum object based on the session_album_id from URL
+        session_album = self.get_object()
+
+        if session_album:
+            # Deactivate the SessionAlbum
+            session_album.active = False
+            session_album.save()
+
+            return Response({"detail": "Session album has been deactivated."}, status=status.HTTP_200_OK)
+        else:
+            # Return a 404 response if the SessionAlbum does not exist
+            return Response({"detail": "Session album not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def get_object(self):
+        # Get the session_album_id from the URL parameters
+        session_album_id = self.kwargs['session_album_id']
+        return self.queryset.filter(id=session_album_id).first()
+
+
 
 
 # class PersonalAlbumListView(generics.ListAPIView):
@@ -698,6 +876,97 @@ class AlbumsPricesForVideosBySess(generics.GenericAPIView):
 
 
 
+
+class DefaultAlbumsPricesForImagesCreateView(generics.CreateAPIView):
+    """
+    View to create default album prices for images.
+    Requires the user to be authenticated.
+    """
+    queryset = DefaultAlbumsPricesForImages.objects.all()
+    serializer_class = DefaultAlbumsPricesForImagesSerializer
+    
+class DefaultAlbumsPricesForImagesUpdateView(generics.UpdateAPIView):
+    """
+    View to update default album prices for images by photographer ID.
+    Requires the user to be authenticated.
+    """
+    serializer_class = DefaultAlbumsPricesForImagesSerializer
+    
+    def get_object(self):
+        # Get photographer ID from URL
+        photographer_id = self.kwargs.get('photographer_id')
+        
+        # Try to find the object related to the given photographer ID
+        obj = DefaultAlbumsPricesForImages.objects.filter(photographer__id=photographer_id).first()
+        
+        # Return None or handle what to do if the object doesn't exist
+        if obj:
+            return obj
+        else:
+            return None  # or handle this case appropriately (e.g., return an empty response)
+        
+
+
+
+class DefaultAlbumsPricesForImagesListView(generics.ListAPIView):
+    """
+    View to retrieve default album prices for images by photographer ID.
+    Requires the user to be authenticated.
+    """
+    serializer_class = DefaultAlbumsPricesForImagesSerializer
+
+    def get_queryset(self):
+        photographer_id = self.kwargs['photographer_id']
+        return DefaultAlbumsPricesForImages.objects.filter(photographer_id=photographer_id)
+
+class DefaultAlbumsPricesForVideosCreateView(generics.CreateAPIView):
+    """
+    View to create default album prices for videos.
+    Requires the user to be authenticated.
+    """
+    queryset = DefaultAlbumsPricesForVideos.objects.all()
+    serializer_class = DefaultAlbumsPricesForVideosSerializer
+    
+
+
+class DefaultAlbumsPricesForVideosUpdateView(generics.UpdateAPIView):
+    """
+    View to update default album prices for videos by photographer ID.
+    Requires the user to be authenticated.
+    """
+    serializer_class = DefaultAlbumsPricesForVideosSerializer
+    
+    def get_object(self):
+        # Get photographer ID from URL
+        photographer_id = self.kwargs.get('photographer_id')
+        
+        # Try to find the object related to the given photographer ID
+        obj = DefaultAlbumsPricesForVideos.objects.filter(photographer__id=photographer_id).first()
+        
+        # Return None or handle the case where the object doesn't exist
+        if obj:
+            return obj
+        else:
+            return None
+        
+
+
+
+class DefaultAlbumsPricesForVideosListView(generics.ListAPIView):
+    """
+    View to retrieve default album prices for videos by photographer ID.
+    Requires the user to be authenticated.
+    """
+    serializer_class = DefaultAlbumsPricesForVideosSerializer
+    
+
+    def get_queryset(self):
+        photographer_id = self.kwargs['photographer_id']
+        return DefaultAlbumsPricesForVideos.objects.filter(photographer_id=photographer_id)
+
+
+
+
 # @method_decorator(csrf_exempt, name='dispatch')
 # class UpdatePricesView(APIView):
 #     def post(self, request, session_album_id):
@@ -742,7 +1011,7 @@ class AlbumsPricesForVideosBySess(generics.GenericAPIView):
 import boto3
 import uuid
 from django.http import JsonResponse
-from rest_framework.decorators import api_view
+
 
 
 
@@ -778,7 +1047,7 @@ def get_batch_presigned_urlssss(request):
     
     return JsonResponse({'urls': presigned_urls})
 
-
+from rest_framework.permissions import IsAuthenticated
 
 @api_view(['GET'])
 def presigned_urls_for_originals(request):
@@ -912,7 +1181,6 @@ def presigned_urls_for_profile_pictures(request):
         region_name='us-east-2',
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-        config=Config(s3={'use_accelerate_endpoint': True})
     )
 
     # Number of presigned URLs to generate (assuming each URL corresponds to an image)
@@ -942,49 +1210,12 @@ from functools import lru_cache
 
 
 
-@api_view(['POST'])
-def create_videos(request):
-    video_urls = request.data.get('video', [])
-    watermarked_video_urls = request.data.get('WatermarkedVideo', [])
-    img_urls = request.data.get('img', [])
-    session_album_id = request.data.get('SessionAlbum')
-
-    # Validate SessionAlbum ID
-    if not session_album_id:
-        return Response({"error": "SessionAlbum ID is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-    # Validate that the number of URLs match
-    if len(video_urls) != len(watermarked_video_urls) or len(video_urls) != len(img_urls):
-        return Response({"error": "The number of videos, watermarked videos, and images must be the same"}, status=status.HTTP_400_BAD_REQUEST)
-
-    # Try to retrieve the SessionAlbum
-    try:
-        session_album = SessionAlbum.objects.get(id=session_album_id)
-    except SessionAlbum.DoesNotExist:
-        return Response({"error": "SessionAlbum not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    # Save the data in a new way, for example, by creating individual video entries
-    created_videos = []
-    for video_url, watermarked_video_url, img_url in zip(video_urls, watermarked_video_urls, img_urls):
-        try:
-            video = Video.objects.create(
-                video=video_url,
-                WatermarkedVideo=watermarked_video_url,
-                img=img_url,
-                SessionAlbum=session_album
-            )
-            created_videos.append(video)
-        except Exception as e:
-            # Return an error if something goes wrong
-            return Response({"error": "An error occurred while saving the videos"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    # Return the created video details
-    return Response({
-        "message": "Videos created successfully",
-        "created_videos": [video.id for video in created_videos]
-    }, status=status.HTTP_201_CREATED)
 
     
+
+
+
+
 from django.utils.dateparse import parse_datetime
 
 from datetime import datetime, timedelta
@@ -999,6 +1230,12 @@ def create_images_and_waves(request):
     watermarked_urls = request.data.get('watermarked_urls', [])
     session_album_id = request.data.get('session_album')
     exif_dates = request.data.get('exif_dates', [])
+
+
+
+    # Validate session_album_id
+    if not session_album_id:
+        return Response({'error': 'Session album ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
     # Validate that URL lists are the same length
     if len(original_urls) != len(watermarked_urls):
@@ -1017,6 +1254,7 @@ def create_images_and_waves(request):
         session_album = SessionAlbum.objects.get(id=session_album_id)
         session_album.dividedToWaves = False
         session_album.active = True
+        session_album.set_expiration_date()
         session_album.save()
 
         return Response({'message': 'Images created successfully without waves'}, status=status.HTTP_201_CREATED)
@@ -1068,6 +1306,7 @@ def create_images_and_waves(request):
         session_album = SessionAlbum.objects.get(id=session_album_id)
         session_album.dividedToWaves = True
         session_album.active = True
+        session_album.set_expiration_date()
         session_album.save()
 
         return Response({'message': 'Images and Waves created successfully'}, status=status.HTTP_201_CREATED)
@@ -1086,6 +1325,8 @@ def create_images_and_waves(request):
         try:
             session_album = SessionAlbum.objects.get(id=session_album_id)
             session_album.dividedToWaves = False  # Set to False if any error occurs
+            session_album.active = True
+            session_album.set_expiration_date()
             session_album.save()
         except SessionAlbum.DoesNotExist:
             print(f"SessionAlbum with id {session_album_id} does not exist.")
@@ -1102,6 +1343,108 @@ def create_images(images_and_waves):
         for original_url, watermarked_url, wave in images_and_waves
     ]
     Img.objects.bulk_create(images_to_create)
+
+
+
+
+
+
+
+@api_view(['POST'])
+def create_videos(request):
+    video_urls = request.data.get('video', [])
+    watermarked_video_urls = request.data.get('WatermarkedVideo', [])
+    img_urls = request.data.get('img', [])
+    session_album_id = request.data.get('SessionAlbum')
+
+    # Validate SessionAlbum ID
+    if not session_album_id:
+        return Response({"error": "SessionAlbum ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Validate that the number of URLs match
+    if len(video_urls) != len(watermarked_video_urls) or len(video_urls) != len(img_urls):
+        return Response({"error": "The number of videos, watermarked videos, and images must be the same"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Try to retrieve the SessionAlbum
+    try:
+        session_album = SessionAlbum.objects.get(id=session_album_id)
+    except SessionAlbum.DoesNotExist:
+        return Response({"error": "SessionAlbum not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    # Save the data in a new way, for example, by creating individual video entries
+    created_videos = []
+    for video_url, watermarked_video_url, img_url in zip(video_urls, watermarked_video_urls, img_urls):
+        try:
+            video = Video.objects.create(
+                video=video_url,
+                WatermarkedVideo=watermarked_video_url,
+                img=img_url,
+                SessionAlbum=session_album
+            )
+            created_videos.append(video)
+        except Exception as e:
+            # Return an error if something goes wrong
+            return Response({"error": "An error occurred while saving the videos"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+    session_album.active = True
+    session_album.set_expiration_date()  # Assuming this method sets some expiration logic
+    session_album.save()
+
+    # Return the created video details
+    return Response({
+        "message": "Videos created successfully",
+        "created_videos": [video.id for video in created_videos]
+    }, status=status.HTTP_201_CREATED)
+
+
+
+
+
+
+
+
+
+
+
+
+
+class CreateVideosView(APIView):
+    def post(self, request, *args, **kwargs):
+        videos_data = request.data.get('videos', [])
+        session_album_id = request.data.get('session_album')
+
+        if not videos_data or not session_album_id:
+            return Response({'error': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch session album once
+        session_album = SessionAlbum.objects.filter(id=session_album_id).first()
+
+        if not session_album:
+            return Response({'error': 'Session album not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        videos = []
+        for video_data in videos_data:
+            original_url = video_data.get('original')
+            transformed_url = video_data.get('transformed')
+
+            if not original_url or not transformed_url:
+                return Response({'error': 'Invalid video data'}, status=status.HTTP_400_BAD_REQUEST)
+
+            video = Video(video=original_url, WatermarkedVideo=transformed_url, SessionAlbum=session_album)
+            video.save()
+            videos.append(video)
+
+        # Use the already fetched session_album instance
+        session_album = SessionAlbum.objects.get(id=session_album_id)
+        session_album.active = True
+        session_album.set_expiration_date()
+        session_album.save()
+
+        serializer = VideoSerializer(videos, many=True)
+        return Response({'message': 'Videos created successfully', 'videos': serializer.data}, status=status.HTTP_201_CREATED)
+    
+
 
 
 
@@ -1142,7 +1485,7 @@ class GetImagesBySessionAlbumView(APIView):
     def get(self, request, session_album_id):
         try:
             session_album = SessionAlbum.objects.get(id=session_album_id)
-            images = Img.objects.filter(SessionAlbum=session_album)
+            images = Img.objects.filter(SessionAlbum=session_album).order_by('-id')
 
             paginator = self.pagination_class()
             paginated_images = paginator.paginate_queryset(images, request)
@@ -1154,33 +1497,7 @@ class GetImagesBySessionAlbumView(APIView):
 
 
 
-class CreateVideosView(APIView):
-    def post(self, request, *args, **kwargs):
-        videos_data = request.data.get('videos', [])
-        session_album_id = request.data.get('session_album')
 
-        if not videos_data or not session_album_id:
-            return Response({'error': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
-
-        session_album = SessionAlbum.objects.filter(id=session_album_id).first()
-
-        if not session_album:
-            return Response({'error': 'Session album not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        videos = []
-        for video_data in videos_data:
-            original_url = video_data.get('original')
-            transformed_url = video_data.get('transformed')
-
-            if not original_url or not transformed_url:
-                return Response({'error': 'Invalid video data'}, status=status.HTTP_400_BAD_REQUEST)
-
-            video = Video(video=original_url, WatermarkedVideo=transformed_url, SessionAlbum=session_album)
-            video.save()
-            videos.append(video)
-
-        serializer = VideoSerializer(videos, many=True)
-        return Response({'message': 'Videos created successfully', 'videos': serializer.data}, status=status.HTTP_201_CREATED)
 
 
 
@@ -1189,7 +1506,7 @@ class CreateVideosView(APIView):
 @api_view(['GET'])
 def get_waves_for_session_album(request, session_album_id):
     try:
-        waves = Wave.objects.filter(session_album=session_album_id)
+        waves = Wave.objects.filter(session_album=session_album_id).order_by('-id')
         
         # Paginate the queryset
         paginator = CustomPageNumberPagination()
@@ -1276,14 +1593,14 @@ def get_original_videos(request, session_album_id):
 @api_view(['GET'])
 def get_watermarked_videos(request, session_album_id):
     session_album = get_object_or_404(SessionAlbum, id=session_album_id)
-    videos = Video.objects.filter(SessionAlbum=session_album).values('WatermarkedVideo')
+    videos = Video.objects.filter(SessionAlbum=session_album).values('WatermarkedVideo').order_by('-id')
     WatermarkedVideos = [video['WatermarkedVideo'] for video in videos if video['WatermarkedVideo']]
     return Response(WatermarkedVideos)
 
 @api_view(['GET'])
 def get_videos_by_session(request, session_album_id):
     session_album = get_object_or_404(SessionAlbum, id=session_album_id)
-    videos = Video.objects.filter(SessionAlbum=session_album)
+    videos = Video.objects.filter(SessionAlbum=session_album).order_by('-id')
 
     paginator = CustomPageNumberPagination()
     paginated_videos = paginator.paginate_queryset(videos, request)
