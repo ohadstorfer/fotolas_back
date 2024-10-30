@@ -1,0 +1,1316 @@
+[
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "admin",
+    "model": "logentry"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "auth",
+    "model": "permission"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "auth",
+    "model": "group"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "contenttypes",
+    "model": "contenttype"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "sessions",
+    "model": "session"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "customuser"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "photographer"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "spot"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "sessionalbum"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "img"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "spotlike"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "follower"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "message"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "chat"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "file"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "wave"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "albumsprices"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "purchaseitem"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "purchase"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "video"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "albumspricesforvideos"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "defaultalbumspricesforvideos"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "base",
+    "model": "defaultalbumspricesforimages"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "token_blacklist",
+    "model": "blacklistedtoken"
+  }
+},
+{
+  "model": "contenttypes.contenttype",
+  "fields": {
+    "app_label": "token_blacklist",
+    "model": "outstandingtoken"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "89i0ckf68tnfezru7l1atz2v6hlwghyn",
+  "fields": {
+    "session_data": ".eJxVjEEOwiAQRe_C2hAQCoxL9z0DmWFAqoYmpV0Z765NutDtf-_9l4i4rTVuPS9xYnERWpx-N8L0yG0HfMd2m2Wa27pMJHdFHrTLceb8vB7u30HFXr-1UgQ6cE7EAYLzwMqDCepcwDnH2tsyFBNsGBhRa1sIdTaGigcgX1C8P9BlN8M:1t5bHK:QtXc--zMzfW6oxbH0uc6x_J8qh8Rbaemw1ahHImLzgQ",
+    "expire_date": "2024-11-12T01:44:14.742Z"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add log entry",
+    "content_type": [
+      "admin",
+      "logentry"
+    ],
+    "codename": "add_logentry"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change log entry",
+    "content_type": [
+      "admin",
+      "logentry"
+    ],
+    "codename": "change_logentry"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete log entry",
+    "content_type": [
+      "admin",
+      "logentry"
+    ],
+    "codename": "delete_logentry"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view log entry",
+    "content_type": [
+      "admin",
+      "logentry"
+    ],
+    "codename": "view_logentry"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add permission",
+    "content_type": [
+      "auth",
+      "permission"
+    ],
+    "codename": "add_permission"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change permission",
+    "content_type": [
+      "auth",
+      "permission"
+    ],
+    "codename": "change_permission"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete permission",
+    "content_type": [
+      "auth",
+      "permission"
+    ],
+    "codename": "delete_permission"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view permission",
+    "content_type": [
+      "auth",
+      "permission"
+    ],
+    "codename": "view_permission"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add group",
+    "content_type": [
+      "auth",
+      "group"
+    ],
+    "codename": "add_group"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change group",
+    "content_type": [
+      "auth",
+      "group"
+    ],
+    "codename": "change_group"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete group",
+    "content_type": [
+      "auth",
+      "group"
+    ],
+    "codename": "delete_group"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view group",
+    "content_type": [
+      "auth",
+      "group"
+    ],
+    "codename": "view_group"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add content type",
+    "content_type": [
+      "contenttypes",
+      "contenttype"
+    ],
+    "codename": "add_contenttype"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change content type",
+    "content_type": [
+      "contenttypes",
+      "contenttype"
+    ],
+    "codename": "change_contenttype"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete content type",
+    "content_type": [
+      "contenttypes",
+      "contenttype"
+    ],
+    "codename": "delete_contenttype"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view content type",
+    "content_type": [
+      "contenttypes",
+      "contenttype"
+    ],
+    "codename": "view_contenttype"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add session",
+    "content_type": [
+      "sessions",
+      "session"
+    ],
+    "codename": "add_session"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change session",
+    "content_type": [
+      "sessions",
+      "session"
+    ],
+    "codename": "change_session"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete session",
+    "content_type": [
+      "sessions",
+      "session"
+    ],
+    "codename": "delete_session"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view session",
+    "content_type": [
+      "sessions",
+      "session"
+    ],
+    "codename": "view_session"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add custom user",
+    "content_type": [
+      "base",
+      "customuser"
+    ],
+    "codename": "add_customuser"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change custom user",
+    "content_type": [
+      "base",
+      "customuser"
+    ],
+    "codename": "change_customuser"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete custom user",
+    "content_type": [
+      "base",
+      "customuser"
+    ],
+    "codename": "delete_customuser"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view custom user",
+    "content_type": [
+      "base",
+      "customuser"
+    ],
+    "codename": "view_customuser"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add photographer",
+    "content_type": [
+      "base",
+      "photographer"
+    ],
+    "codename": "add_photographer"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change photographer",
+    "content_type": [
+      "base",
+      "photographer"
+    ],
+    "codename": "change_photographer"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete photographer",
+    "content_type": [
+      "base",
+      "photographer"
+    ],
+    "codename": "delete_photographer"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view photographer",
+    "content_type": [
+      "base",
+      "photographer"
+    ],
+    "codename": "view_photographer"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add spot",
+    "content_type": [
+      "base",
+      "spot"
+    ],
+    "codename": "add_spot"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change spot",
+    "content_type": [
+      "base",
+      "spot"
+    ],
+    "codename": "change_spot"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete spot",
+    "content_type": [
+      "base",
+      "spot"
+    ],
+    "codename": "delete_spot"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view spot",
+    "content_type": [
+      "base",
+      "spot"
+    ],
+    "codename": "view_spot"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add session album",
+    "content_type": [
+      "base",
+      "sessionalbum"
+    ],
+    "codename": "add_sessionalbum"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change session album",
+    "content_type": [
+      "base",
+      "sessionalbum"
+    ],
+    "codename": "change_sessionalbum"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete session album",
+    "content_type": [
+      "base",
+      "sessionalbum"
+    ],
+    "codename": "delete_sessionalbum"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view session album",
+    "content_type": [
+      "base",
+      "sessionalbum"
+    ],
+    "codename": "view_sessionalbum"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add img",
+    "content_type": [
+      "base",
+      "img"
+    ],
+    "codename": "add_img"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change img",
+    "content_type": [
+      "base",
+      "img"
+    ],
+    "codename": "change_img"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete img",
+    "content_type": [
+      "base",
+      "img"
+    ],
+    "codename": "delete_img"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view img",
+    "content_type": [
+      "base",
+      "img"
+    ],
+    "codename": "view_img"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add spot like",
+    "content_type": [
+      "base",
+      "spotlike"
+    ],
+    "codename": "add_spotlike"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change spot like",
+    "content_type": [
+      "base",
+      "spotlike"
+    ],
+    "codename": "change_spotlike"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete spot like",
+    "content_type": [
+      "base",
+      "spotlike"
+    ],
+    "codename": "delete_spotlike"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view spot like",
+    "content_type": [
+      "base",
+      "spotlike"
+    ],
+    "codename": "view_spotlike"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add follower",
+    "content_type": [
+      "base",
+      "follower"
+    ],
+    "codename": "add_follower"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change follower",
+    "content_type": [
+      "base",
+      "follower"
+    ],
+    "codename": "change_follower"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete follower",
+    "content_type": [
+      "base",
+      "follower"
+    ],
+    "codename": "delete_follower"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view follower",
+    "content_type": [
+      "base",
+      "follower"
+    ],
+    "codename": "view_follower"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add message",
+    "content_type": [
+      "base",
+      "message"
+    ],
+    "codename": "add_message"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change message",
+    "content_type": [
+      "base",
+      "message"
+    ],
+    "codename": "change_message"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete message",
+    "content_type": [
+      "base",
+      "message"
+    ],
+    "codename": "delete_message"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view message",
+    "content_type": [
+      "base",
+      "message"
+    ],
+    "codename": "view_message"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add chat",
+    "content_type": [
+      "base",
+      "chat"
+    ],
+    "codename": "add_chat"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change chat",
+    "content_type": [
+      "base",
+      "chat"
+    ],
+    "codename": "change_chat"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete chat",
+    "content_type": [
+      "base",
+      "chat"
+    ],
+    "codename": "delete_chat"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view chat",
+    "content_type": [
+      "base",
+      "chat"
+    ],
+    "codename": "view_chat"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add file",
+    "content_type": [
+      "base",
+      "file"
+    ],
+    "codename": "add_file"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change file",
+    "content_type": [
+      "base",
+      "file"
+    ],
+    "codename": "change_file"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete file",
+    "content_type": [
+      "base",
+      "file"
+    ],
+    "codename": "delete_file"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view file",
+    "content_type": [
+      "base",
+      "file"
+    ],
+    "codename": "view_file"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add wave",
+    "content_type": [
+      "base",
+      "wave"
+    ],
+    "codename": "add_wave"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change wave",
+    "content_type": [
+      "base",
+      "wave"
+    ],
+    "codename": "change_wave"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete wave",
+    "content_type": [
+      "base",
+      "wave"
+    ],
+    "codename": "delete_wave"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view wave",
+    "content_type": [
+      "base",
+      "wave"
+    ],
+    "codename": "view_wave"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add albums prices",
+    "content_type": [
+      "base",
+      "albumsprices"
+    ],
+    "codename": "add_albumsprices"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change albums prices",
+    "content_type": [
+      "base",
+      "albumsprices"
+    ],
+    "codename": "change_albumsprices"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete albums prices",
+    "content_type": [
+      "base",
+      "albumsprices"
+    ],
+    "codename": "delete_albumsprices"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view albums prices",
+    "content_type": [
+      "base",
+      "albumsprices"
+    ],
+    "codename": "view_albumsprices"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add purchase item",
+    "content_type": [
+      "base",
+      "purchaseitem"
+    ],
+    "codename": "add_purchaseitem"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change purchase item",
+    "content_type": [
+      "base",
+      "purchaseitem"
+    ],
+    "codename": "change_purchaseitem"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete purchase item",
+    "content_type": [
+      "base",
+      "purchaseitem"
+    ],
+    "codename": "delete_purchaseitem"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view purchase item",
+    "content_type": [
+      "base",
+      "purchaseitem"
+    ],
+    "codename": "view_purchaseitem"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add purchase",
+    "content_type": [
+      "base",
+      "purchase"
+    ],
+    "codename": "add_purchase"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change purchase",
+    "content_type": [
+      "base",
+      "purchase"
+    ],
+    "codename": "change_purchase"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete purchase",
+    "content_type": [
+      "base",
+      "purchase"
+    ],
+    "codename": "delete_purchase"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view purchase",
+    "content_type": [
+      "base",
+      "purchase"
+    ],
+    "codename": "view_purchase"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add video",
+    "content_type": [
+      "base",
+      "video"
+    ],
+    "codename": "add_video"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change video",
+    "content_type": [
+      "base",
+      "video"
+    ],
+    "codename": "change_video"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete video",
+    "content_type": [
+      "base",
+      "video"
+    ],
+    "codename": "delete_video"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view video",
+    "content_type": [
+      "base",
+      "video"
+    ],
+    "codename": "view_video"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add albums prices for videos",
+    "content_type": [
+      "base",
+      "albumspricesforvideos"
+    ],
+    "codename": "add_albumspricesforvideos"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change albums prices for videos",
+    "content_type": [
+      "base",
+      "albumspricesforvideos"
+    ],
+    "codename": "change_albumspricesforvideos"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete albums prices for videos",
+    "content_type": [
+      "base",
+      "albumspricesforvideos"
+    ],
+    "codename": "delete_albumspricesforvideos"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view albums prices for videos",
+    "content_type": [
+      "base",
+      "albumspricesforvideos"
+    ],
+    "codename": "view_albumspricesforvideos"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add default albums prices for videos",
+    "content_type": [
+      "base",
+      "defaultalbumspricesforvideos"
+    ],
+    "codename": "add_defaultalbumspricesforvideos"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change default albums prices for videos",
+    "content_type": [
+      "base",
+      "defaultalbumspricesforvideos"
+    ],
+    "codename": "change_defaultalbumspricesforvideos"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete default albums prices for videos",
+    "content_type": [
+      "base",
+      "defaultalbumspricesforvideos"
+    ],
+    "codename": "delete_defaultalbumspricesforvideos"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view default albums prices for videos",
+    "content_type": [
+      "base",
+      "defaultalbumspricesforvideos"
+    ],
+    "codename": "view_defaultalbumspricesforvideos"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add default albums prices for images",
+    "content_type": [
+      "base",
+      "defaultalbumspricesforimages"
+    ],
+    "codename": "add_defaultalbumspricesforimages"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change default albums prices for images",
+    "content_type": [
+      "base",
+      "defaultalbumspricesforimages"
+    ],
+    "codename": "change_defaultalbumspricesforimages"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete default albums prices for images",
+    "content_type": [
+      "base",
+      "defaultalbumspricesforimages"
+    ],
+    "codename": "delete_defaultalbumspricesforimages"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view default albums prices for images",
+    "content_type": [
+      "base",
+      "defaultalbumspricesforimages"
+    ],
+    "codename": "view_defaultalbumspricesforimages"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add blacklisted token",
+    "content_type": [
+      "token_blacklist",
+      "blacklistedtoken"
+    ],
+    "codename": "add_blacklistedtoken"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change blacklisted token",
+    "content_type": [
+      "token_blacklist",
+      "blacklistedtoken"
+    ],
+    "codename": "change_blacklistedtoken"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete blacklisted token",
+    "content_type": [
+      "token_blacklist",
+      "blacklistedtoken"
+    ],
+    "codename": "delete_blacklistedtoken"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view blacklisted token",
+    "content_type": [
+      "token_blacklist",
+      "blacklistedtoken"
+    ],
+    "codename": "view_blacklistedtoken"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can add outstanding token",
+    "content_type": [
+      "token_blacklist",
+      "outstandingtoken"
+    ],
+    "codename": "add_outstandingtoken"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can change outstanding token",
+    "content_type": [
+      "token_blacklist",
+      "outstandingtoken"
+    ],
+    "codename": "change_outstandingtoken"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can delete outstanding token",
+    "content_type": [
+      "token_blacklist",
+      "outstandingtoken"
+    ],
+    "codename": "delete_outstandingtoken"
+  }
+},
+{
+  "model": "auth.permission",
+  "fields": {
+    "name": "Can view outstanding token",
+    "content_type": [
+      "token_blacklist",
+      "outstandingtoken"
+    ],
+    "codename": "view_outstandingtoken"
+  }
+},
+{
+  "model": "base.customuser",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$1lHIOZzDXsspkMxMOjpgKd$uV1qwB3Ry8JSAExjtWnzE6sFLupKLHQMywl2zOCQNHw=",
+    "email": "ohad.storfer@gmail.com",
+    "fullName": "ohad storfer",
+    "is_athlete": true,
+    "is_photographer": false,
+    "is_active": true,
+    "is_superuser": true,
+    "is_staff": true,
+    "date_joined": "2024-10-28T23:39:53.879Z",
+    "last_login": "2024-10-29T01:44:14.661Z",
+    "groups": [],
+    "user_permissions": [],
+    "chats": []
+  }
+},
+{
+  "model": "token_blacklist.outstandingtoken",
+  "pk": 1,
+  "fields": {
+    "user": [
+      "ohad.storfer@gmail.com"
+    ],
+    "jti": "4ab8a5a74b3b4698a7338f0e4cfd1569",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTczMDc2MzYxOSwiaWF0IjoxNzMwMTU4ODE5LCJqdGkiOiI0YWI4YTVhNzRiM2I0Njk4YTczMzhmMGU0Y2ZkMTU2OSIsInVzZXJfaWQiOjF9.C6XkHwvHfzTWhEeLcla8L3jgNv20cxELrP3ALnHERco",
+    "created_at": "2024-10-28T23:40:19.603Z",
+    "expires_at": "2024-11-04T23:40:19Z"
+  }
+}
+]
