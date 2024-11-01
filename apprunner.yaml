@@ -1,12 +1,14 @@
 version: 1.0
-runtime: python3
+runtime: python311  
 build:
   commands:
     build:
-      - python -m pip install --upgrade pip  # Ensure pip is installed
-      - pip install -r requirements.txt
+      - python3.11 -m ensurepip --upgrade  
+      - python3.11 -m pip install -r requirements.txt  
+      - python3.11 -m pip install gunicorn  
+
 run:
-  runtime-version: 3.8.16  # Specify the Python version you're using
-  command: gunicorn myprog.wsgi:application --bind 0.0.0.0:8000
+  runtime-version: 3.11  
+  command: gunicorn myprog.wsgi:application --bind 0.0.0.0:8000  
   network:
-    port: 8000
+    port: 8000  
