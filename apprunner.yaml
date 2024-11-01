@@ -6,6 +6,6 @@ build:
       - pip install -r requirements.txt  # Install dependencies here
 run:
   runtime-version: 3.8  # Specify the exact version here if needed
-  command: gunicorn myprog.wsgi:application --bind 0.0.0.0:8000
+  command: gunicorn myprog.wsgi:application --bind 0.0.0.0:8080
   network:
-    port: 8000
+    port: 8080
