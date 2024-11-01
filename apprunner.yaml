@@ -1,9 +1,11 @@
 version: 1.0
-runtime: python311
+runtime: python3
+build:
+  commands:
+    build:
+      - pip install -r requirements.txt  # Install dependencies here
 run:
-  runtime-version: 3.11
-  pre-run:
-    - pip3 install -r requirements.txt  # Install dependencies here
-  command: gunicorn myprog.wsgi:application --bind 0.0.0.0:8000  # Start your application with gunicorn
+  runtime-version: 3.8  # Specify the exact version here if needed
+  command: gunicorn myprog.wsgi:application --bind 0.0.0.0:8000
   network:
     port: 8000
