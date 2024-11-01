@@ -1,11 +1,11 @@
 version: 1.0
-runtime: python
-runtime_environment:
-  python_version: 3.11  # or the specific version you are using
+runtime: python3
 build:
   commands:
-    - apt-get update && apt-get install -y python3 python3-pip
-    - pip3 install -r requirements.txt  # Use pip3 instead of pip
-start:
-  commands:
-    - gunicorn myproject.wsgi:application
+    build:
+      - pip install -r requirements.txt
+run:
+  runtime-version: 3.8.16
+  command: sh startup.sh
+  network:
+    port: 8000
