@@ -3,9 +3,10 @@ runtime: python3
 build:
   commands:
     build:
+      - python -m pip install --upgrade pip  # Ensure pip is installed
       - pip install -r requirements.txt
 run:
-  runtime-version: 3.8.16
-  command: sh startup.sh && gunicorn myprog.wsgi:application --bind 0.0.0.0:8000
+  runtime-version: 3.8.16  # Specify the Python version you're using
+  command: gunicorn myprog.wsgi:application --bind 0.0.0.0:8000
   network:
     port: 8000
