@@ -9,7 +9,7 @@ from .views import (
     ImgListCreateView, ImgDetailView,
     SpotLikeListCreateView, SpotLikeDetailView,
     FollowerListCreateView, FollowerDetailView, ValidateTokenView,
-    DefaultAlbumsPricesForImagesCreateView, DefaultAlbumsPricesForImagesUpdateView, DefaultAlbumsPricesForImagesListView,  DefaultAlbumsPricesForVideosCreateView, DefaultAlbumsPricesForVideosUpdateView, DefaultAlbumsPricesForVideosListView,
+    DefaultAlbumsPricesForImagesCreateView, DefaultAlbumsPricesForImagesUpdateView, DefaultAlbumsPricesForImagesListView,  DefaultAlbumsPricesForVideosCreateView, DefaultAlbumsPricesForVideosUpdateView, DefaultAlbumsPricesForVideosListView, create_account, create_account_link,
     create_images_and_waves, create_videos, get_batch_presigned_urlssss, get_images_for_multiple_waves, get_images_for_wave, DeactivateSessionAlbum,  get_original_videos, get_videos_by_session, get_watermarked_photos_by_wave, get_watermarked_videos, get_waves, get_waves_for_session_album, presigned_urls_for_original_videos, presigned_urls_for_originals, presigned_urls_for_profile_pictures, presigned_urls_for_watermarked, presigned_urls_for_watermarked_videos, 
 )
 
@@ -123,5 +123,8 @@ urlpatterns = [
     path('api/get_images_for_multiple_waves/', get_images_for_multiple_waves, name='get_images_for_multiple_waves'),
 
     path('watermarked_photos/<int:wave_id>/', get_watermarked_photos_by_wave, name='get_watermarked_photos_by_wave'),
+
+    path("account_link/", create_account_link, name="create_account_link"),
+    path("account/", create_account, name="create_account"),
 
 ]

@@ -14,6 +14,7 @@ from datetime import timedelta
 import os
 from pathlib import Path
 from decouple import config
+import stripe
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -237,4 +238,5 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool, default=True)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 FRONTEND_URL = 'https://www.surfpik.com'  
+
 

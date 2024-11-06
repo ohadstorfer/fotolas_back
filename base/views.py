@@ -1,5 +1,6 @@
 # views.py
 from datetime import timedelta
+import json
 from urllib import request
 from django.shortcuts import get_object_or_404, render
 from django.template import RequestContext
@@ -1617,3 +1618,52 @@ def get_videos_by_session(request, session_album_id):
 
 
 
+
+
+from decouple import config
+import stripe
+from django.views.decorators.http import require_POST
+from django.conf import settings
+from django.http import JsonResponse
+
+# Set Stripe API key and version
+stripe.api_key = config('STRIPE_API_KEY')
+stripe.api_version = '2023-10-16'
+
+@csrf_exempt
+@require_POST
+def create_account_link(request):
+    try:
+        data = json.loads(request.body)
+        connected_account_id = data.get("account")
+
+        account_link = stripe.AccountLink.create(
+            account=connected_account_id,
+            return_url=f"https://oyster-app-b3323.ondigitalocean.app/{connected_account_id}",
+            refresh_url=f"https://oyster-app-b3323.ondigitalocean.app/{connected_account_id}",
+            type="account_onboarding",
+        )
+
+        return JsonResponse({"url": account_link.url})
+    except Exception as e:
+        print("Error creating account link: ", e)
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+@require_POST
+def create_account(request):
+    try:
+        account = stripe.Account.create(
+            type="express",
+            capabilities={
+                "card_payments": {"requested": True},
+                "transfers": {"requested": True},
+            },
+            business_type="individual",  # Set this according to your requirements
+        )
+
+        return JsonResponse({"account": account.id})
+    except Exception as e:
+        print("Error creating account: ", e)
+        return JsonResponse({"error": str(e)}, status=500)
