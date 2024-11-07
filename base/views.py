@@ -1654,8 +1654,8 @@ def create_account_link(request):
 @require_POST
 def create_account(request):
     try:
-        country = request.POST.get('country')
-        if not country:
+        selectedCountry = request.POST.get('country')
+        if not selectedCountry:
             return JsonResponse({"error": "Country is required"}, status=400)
         
         account = stripe.Account.create(
@@ -1665,7 +1665,7 @@ def create_account(request):
                 "transfers": {"requested": True},
             },
             business_type="individual",  # Set this according to your requirements
-            country=country,
+            country=selectedCountry,
         )
 
         return JsonResponse({"account": account.id})
