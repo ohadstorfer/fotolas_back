@@ -45,6 +45,8 @@ class CustomUserManager(UserManager):
         extra_fields.setdefault('is_superuser', True)
         return self._create_user(email, password,  fullName, **extra_fields)
 
+
+
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     fullName = models.CharField(max_length=255)
@@ -55,6 +57,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
     last_login = models.DateTimeField(blank=True, null=True)
+    stripe_account_id = models.CharField(max_length=255, blank=True, null=True)
+    verification_status = models.CharField(max_length=255, blank=True, null=True)
     chats = models.ManyToManyField('Chat', related_name='user_chats', blank=True)
 
     objects = CustomUserManager()
@@ -69,16 +73,17 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self):
         return self.fullName or self.email.split('@')[0]
 
-
-
 class Photographer(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     about = models.TextField()
-    profile_image = models.CharField(default="default.png",max_length=255)
-    cover_image = models.CharField(default="default.png" ,max_length=255)
+    profile_image = models.CharField(default="default.png", max_length=255)
+    cover_image = models.CharField(default="default.png", max_length=255)
 
     def __str__(self) -> str:
         return f'{self.user}'
+
+
+
 
 class Spot(models.Model):
     name = models.CharField(max_length=255)

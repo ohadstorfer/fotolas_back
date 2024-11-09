@@ -10,7 +10,7 @@ from .views import (
     SpotLikeListCreateView, SpotLikeDetailView,
     FollowerListCreateView, FollowerDetailView, ValidateTokenView,
     DefaultAlbumsPricesForImagesCreateView, DefaultAlbumsPricesForImagesUpdateView, DefaultAlbumsPricesForImagesListView,  DefaultAlbumsPricesForVideosCreateView, DefaultAlbumsPricesForVideosUpdateView, DefaultAlbumsPricesForVideosListView, create_account, create_account_link,
-    create_images_and_waves, create_videos, get_batch_presigned_urlssss, get_images_for_multiple_waves, get_images_for_wave, DeactivateSessionAlbum,  get_original_videos, get_videos_by_session, get_watermarked_photos_by_wave, get_watermarked_videos, get_waves, get_waves_for_session_album, presigned_urls_for_original_videos, presigned_urls_for_originals, presigned_urls_for_profile_pictures, presigned_urls_for_watermarked, presigned_urls_for_watermarked_videos, 
+    create_images_and_waves, create_videos, get_batch_presigned_urlssss, get_images_for_multiple_waves, get_images_for_wave, DeactivateSessionAlbum,  get_original_videos, get_videos_by_session, get_watermarked_photos_by_wave, get_watermarked_videos, get_waves, get_waves_for_session_album, presigned_urls_for_original_videos, presigned_urls_for_originals, presigned_urls_for_profile_pictures, presigned_urls_for_watermarked, presigned_urls_for_watermarked_videos, stripe_webhook, 
 )
 
 urlpatterns = [
@@ -126,5 +126,6 @@ urlpatterns = [
 
     path("account_link/", create_account_link, name="create_account_link"),
     path("account/", create_account, name="create_account"),
+    path('stripe/webhook/', stripe_webhook, name='stripe-webhook'),
 
 ]

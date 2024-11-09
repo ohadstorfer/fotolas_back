@@ -1639,8 +1639,8 @@ def create_account_link(request):
 
         account_link = stripe.AccountLink.create(
             account=connected_account_id,
-            return_url=f"https://oyster-app-b3323.ondigitalocean.app/{connected_account_id}",
-            refresh_url=f"https://oyster-app-b3323.ondigitalocean.app/{connected_account_id}",
+            return_url=f"https://surfpik.com/VerificationProccess",
+            refresh_url=f"https://surfpik.com/VerificationProccess",
             type="account_onboarding",
         )
 
@@ -1654,21 +1654,135 @@ def create_account_link(request):
 @require_POST
 def create_account(request):
     try:
-        selectedCountry = request.POST.get('country')
+        # Parse the JSON data from the request body
+        data = json.loads(request.body.decode('utf-8'))
+        
+        # Get the country and user ID from the parsed data
+        selectedCountry = data.get('Country')
+        user_id = data.get('user_id')  # Get the user ID from the request
+
         if not selectedCountry:
             return JsonResponse({"error": "Country is required"}, status=400)
         
-        account = stripe.Account.create(
-            type="express",
-            capabilities={
-                "card_payments": {"requested": True},
+        if not user_id:
+            return JsonResponse({"error": "User ID is required"}, status=400)
+
+        # Get the user instance based on the user_id
+        user = CustomUser.objects.filter(id=user_id).first()
+        if not user:
+            return JsonResponse({"error": "User not found"}, status=404)
+
+        # Prepare the account creation parameters
+        account_params = {
+            "type": "express",
+            "capabilities": {
                 "transfers": {"requested": True},
             },
-            business_type="individual",  # Set this according to your requirements
-            country=selectedCountry,
-        )
+            "business_type": "individual",  # Set this according to your requirements
+            "country": selectedCountry,
+        }
+        
+        # If the country is not "us", include the tos_acceptance field
+        if selectedCountry.lower() != "us":
+            account_params["tos_acceptance"] = {"service_agreement": "recipient"}
+        
+        # Create the Stripe account
+        account = stripe.Account.create(**account_params)
+
+        # Update the user with the new Stripe account ID and initial verification status
+        user.stripe_account_id = account.id
+        user.verification_status = 'Pending Verification'  # Initial status
+        user.save()
 
         return JsonResponse({"account": account.id})
+    
     except Exception as e:
         print("Error creating account: ", e)
         return JsonResponse({"error": str(e)}, status=500)
+
+
+
+
+
+endpoint_secret = 'whsec_3bda83ba37bf5069050af498f8e6b74e2d8b60ade21a25e732bfee6ea01d8e9e'
+
+# @csrf_exempt
+# def stripe_webhook(request):
+#     payload = request.body
+#     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+
+#     try:
+#         event = stripe.Webhook.construct_event(
+#             payload=payload, sig_header=sig_header, secret=endpoint_secret
+#         )
+#     except ValueError as e:
+#         # Invalid payload.
+#         return HttpResponse(status=400)
+#     except stripe.error.SignatureVerificationError as e:
+#         # Invalid signature.
+#         return HttpResponse(status=400)
+
+#     # Handle specific webhook events.
+#     if event['type'] == 'account.updated':
+#         account = event['data']['object']
+#         handle_account_update(account)
+
+#     return JsonResponse({'success': True})
+
+# def handle_account_update(account):
+#     # Update the Photographer model with relevant information.
+#     stripe_account_id = account.get('id')
+#     verification_status = account.get('requirements', {}).get('disabled_reason')
+
+#     # Find the corresponding Photographer based on the Stripe account ID.
+#     photographer = Photographer.objects.filter(user__stripe_account_id=stripe_account_id).first()
+#     if photographer:
+#         # Store verification status or other relevant data.
+#         photographer.verification_status = verification_status
+#         photographer.save()
+
+#         # Log or perform any additional processing if needed.
+#         print(f'Updated verification status for photographer {photographer.user}: {verification_status}')
+
+
+
+
+@csrf_exempt
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload=payload, sig_header=sig_header, secret=endpoint_secret
+        )
+    except ValueError:
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError:
+        return HttpResponse(status=400)
+
+    if event['type'] == 'account.updated':
+        account = event['data']['object']
+        handle_account_update(account)
+
+    return JsonResponse({'success': True})
+
+def handle_account_update(account):
+    stripe_account_id = account.get('id')
+    disabled_reason = account.get('requirements', {}).get('disabled_reason')
+
+    user = CustomUser.objects.filter(stripe_account_id=stripe_account_id).first()
+    if user:
+        if disabled_reason is None:
+            user.verification_status = 'Verified'
+            user.is_photographer = True
+            user.save()
+
+            # Create Photographer instance if it doesn't exist
+            if not Photographer.objects.filter(user=user).exists():
+                Photographer.objects.create(user=user)
+        else:
+            user.verification_status = f'Disabled: {disabled_reason}'
+            user.save()
+
+        print(f'Updated verification status for user {user.email}: {user.verification_status}')
