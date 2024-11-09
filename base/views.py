@@ -1704,45 +1704,8 @@ def create_account(request):
 
 
 
-endpoint_secret = 'whsec_3bda83ba37bf5069050af498f8e6b74e2d8b60ade21a25e732bfee6ea01d8e9e'
+endpoint_secret = config('endpoint_secret')
 
-# @csrf_exempt
-# def stripe_webhook(request):
-#     payload = request.body
-#     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-
-#     try:
-#         event = stripe.Webhook.construct_event(
-#             payload=payload, sig_header=sig_header, secret=endpoint_secret
-#         )
-#     except ValueError as e:
-#         # Invalid payload.
-#         return HttpResponse(status=400)
-#     except stripe.error.SignatureVerificationError as e:
-#         # Invalid signature.
-#         return HttpResponse(status=400)
-
-#     # Handle specific webhook events.
-#     if event['type'] == 'account.updated':
-#         account = event['data']['object']
-#         handle_account_update(account)
-
-#     return JsonResponse({'success': True})
-
-# def handle_account_update(account):
-#     # Update the Photographer model with relevant information.
-#     stripe_account_id = account.get('id')
-#     verification_status = account.get('requirements', {}).get('disabled_reason')
-
-#     # Find the corresponding Photographer based on the Stripe account ID.
-#     photographer = Photographer.objects.filter(user__stripe_account_id=stripe_account_id).first()
-#     if photographer:
-#         # Store verification status or other relevant data.
-#         photographer.verification_status = verification_status
-#         photographer.save()
-
-#         # Log or perform any additional processing if needed.
-#         print(f'Updated verification status for photographer {photographer.user}: {verification_status}')
 
 
 
