@@ -236,6 +236,7 @@ class SessionAlbumWithDetailsSerializer(serializers.ModelSerializer):
     photographer_name = serializers.ReadOnlyField(source='photographer.user.fullName')
     photographer_profile_image = serializers.SerializerMethodField()
     days_until_expiration = serializers.SerializerMethodField()
+    photographer_stripe_account_id = serializers.ReadOnlyField(source='photographer.stripe_account_id')
 
     class Meta:
         model = SessionAlbum

@@ -1570,6 +1570,45 @@ def get_images_for_multiple_waves(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+
+@csrf_exempt
+def get_images_by_ids(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            image_ids = data.get('image_ids', [])
+            
+            if not image_ids:
+                return JsonResponse({"error": "No image IDs provided"}, status=400)
+            
+            images = Img.objects.filter(id__in=image_ids).values('id', 'photo')
+            return JsonResponse(list(images), safe=False)
+        
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+@csrf_exempt
+def get_videos_by_ids(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            video_ids = data.get('video_ids', [])
+            
+            if not video_ids:
+                return JsonResponse({"error": "No video IDs provided"}, status=400)
+            
+            videos = Video.objects.filter(id__in=video_ids).values('id', 'video')
+            return JsonResponse(list(videos), safe=False)
+        
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+
 
 
 
@@ -1741,11 +1780,62 @@ def handle_account_update(account):
             user.is_photographer = True
             user.save()
 
-            # Create Photographer instance if it doesn't exist
+            # Create Photographer instance if it doesn't exist and set the stripe_account_id
             if not Photographer.objects.filter(user=user).exists():
-                Photographer.objects.create(user=user)
+                Photographer.objects.create(user=user, stripe_account_id=stripe_account_id)
         else:
             user.verification_status = f'Disabled: {disabled_reason}'
             user.save()
 
         print(f'Updated verification status for user {user.email}: {user.verification_status}')
+
+
+
+
+
+
+
+
+@csrf_exempt
+@require_POST
+def create_checkout_session(request):
+    try:
+        # Parse the incoming JSON request body
+        data = json.loads(request.body.decode('utf-8'))
+        
+        # Extract details from the request data
+        product_name = data.get('product_name', 'Default Product')
+        amount = data.get('amount', 1000)  # Default to $10.00 (in cents)
+        currency = data.get('currency', 'usd')
+        quantity = data.get('quantity', 1)
+        connected_account_id = data.get('connected_account_id')
+
+        # Validate required fields
+        if not connected_account_id:
+            return JsonResponse({"error": "Connected account ID is required"}, status=400)
+
+        # Create the checkout session
+        session = stripe.checkout.Session.create(
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": currency,
+                        "product_data": {"name": product_name},
+                        "unit_amount": amount,
+                    },
+                    "quantity": quantity,
+                },
+            ],
+            payment_intent_data={
+                "application_fee_amount": int(amount * 0.2),  # Example fee: 20% of the amount
+                "transfer_data": {"destination": connected_account_id},
+            },
+            mode="payment",
+            success_url="https://surfpik.com/PaymentSuccessfull",
+            cancel_url="https://surfpik.com/CartErrors",
+        )
+
+        return JsonResponse({"url": session.url})
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
