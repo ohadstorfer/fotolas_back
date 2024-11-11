@@ -1839,3 +1839,47 @@ def create_checkout_session(request):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+
+
+
+
+
+
+
+@csrf_exempt
+def create_account_session(request):
+    try:
+        # Check if the request method is POST
+        if request.method != 'POST':
+            return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+        # Parse JSON body to retrieve connected account ID
+        body = json.loads(request.body.decode('utf-8'))
+        connected_account_id = body.get('connected_account_id')
+
+        if not connected_account_id:
+            return JsonResponse({'error': 'Connected account ID is required'}, status=400)
+
+        # Create the account session
+        account_session = stripe.AccountSession.create(
+            account=connected_account_id,
+            components={
+                "payouts": {
+                    "enabled": True,
+                    "features": {
+                        "standard_payouts": True,
+                        "external_account_collection": True,
+                    }
+                },
+            },
+        )
+
+        return JsonResponse({
+            'url': account_session.url,  # Assuming `url` is what you need for redirection
+        })
+
+    except Exception as e:
+        print('An error occurred when calling the Stripe API to create an account session: ', e)
+        return JsonResponse({'error': str(e)}, status=500)

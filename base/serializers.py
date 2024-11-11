@@ -77,7 +77,7 @@ class PasswordResetSerializer(serializers.Serializer):
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['email', 'fullName', 'is_athlete', 'is_photographer', 'password']
+        fields = ['email', 'fullName', 'is_athlete', 'is_photographer', 'password','stripe_account_id']
 
     def create(self, validated_data):
         user = CustomUser.objects.create(
