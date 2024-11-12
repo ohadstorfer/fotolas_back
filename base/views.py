@@ -1877,7 +1877,7 @@ def create_account_session(request):
         )
 
         return JsonResponse({
-            'url': account_session.url,  # Assuming `url` is what you need for redirection
+            'client_secret': account_session.client_secret,
         })
 
     except Exception as e:
