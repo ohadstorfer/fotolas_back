@@ -178,9 +178,9 @@ class AlbumsPricesForVideos(models.Model):
 
 class DefaultAlbumsPricesForImages(models.Model):
     photographer = models.ForeignKey(Photographer, on_delete=models.CASCADE)
-    price_1_to_5 = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
-    price_6_to_50 = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
-    price_51_plus = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
+    price_1_to_5 = models.DecimalField(max_digits=10, decimal_places=1, default=20.0)
+    price_6_to_50 = models.DecimalField(max_digits=10, decimal_places=1, default=25.0)
+    price_51_plus = models.DecimalField(max_digits=10, decimal_places=1, default=30.0)
 
     def __str__(self):
         return f'DefaultAlbumsPricesForImages - photographer: {self.photographer.id}'
@@ -188,9 +188,9 @@ class DefaultAlbumsPricesForImages(models.Model):
 
 class DefaultAlbumsPricesForVideos(models.Model):
     photographer = models.ForeignKey(Photographer, on_delete=models.CASCADE)
-    price_1_to_3 = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
-    price_4_to_15 = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
-    price_16_plus = models.DecimalField(max_digits=10, decimal_places=1, default=0.0)
+    price_1_to_3 = models.DecimalField(max_digits=10, decimal_places=1, default=25.0)
+    price_4_to_15 = models.DecimalField(max_digits=10, decimal_places=1, default=30.0)
+    price_16_plus = models.DecimalField(max_digits=10, decimal_places=1, default=35.0)
 
     def __str__(self):
         return f'DefaultAlbumsPricesForVideos - photographer: {self.photographer.id}'

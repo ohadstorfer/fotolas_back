@@ -1781,8 +1781,26 @@ def handle_account_update(account):
             user.save()
 
             # Create Photographer instance if it doesn't exist and set the stripe_account_id
-            if not Photographer.objects.filter(user=user).exists():
-                Photographer.objects.create(user=user, stripe_account_id=stripe_account_id)
+            photographer, created = Photographer.objects.get_or_create(user=user, stripe_account_id=stripe_account_id)
+
+            # Create default pricing for images and videos
+            if created:
+                # Default pricing for images
+                DefaultAlbumsPricesForImages.objects.create(
+                    photographer=photographer,
+                    price_1_to_5=20.0,
+                    price_6_to_50=25.0,
+                    price_51_plus=30.0
+                )
+
+                # Default pricing for videos
+                DefaultAlbumsPricesForVideos.objects.create(
+                    photographer=photographer,
+                    price_1_to_3=25.0,
+                    price_4_to_15=30.0,
+                    price_16_plus=35.0
+                )
+
         else:
             user.verification_status = f'Disabled: {disabled_reason}'
             user.save()
@@ -1866,12 +1884,67 @@ def create_account_session(request):
         account_session = stripe.AccountSession.create(
             account=connected_account_id,
             components={
-                "payouts": {
+                "payments": {
+                    "enabled": True,
+                        "features": {
+                            "refund_management": False,
+                            "dispute_management": False,
+                            "capture_payments": False,
+                            "destination_on_behalf_of_charge_management": False,
+                        },
+                    },
+                "balances": {
                     "enabled": True,
                     "features": {
-                        "standard_payouts": True,
-                        "external_account_collection": True,
-                    }
+                        "instant_payouts": False,
+                        "standard_payouts": False,
+                        "edit_payout_schedule": False,
+                    },
+                    },
+            },
+        )
+
+        return JsonResponse({
+            'client_secret': account_session.client_secret,
+        })
+
+    except Exception as e:
+        print('An error occurred when calling the Stripe API to create an account session: ', e)
+        return JsonResponse({'error': str(e)}, status=500)
+    
+
+
+
+
+
+
+
+
+@csrf_exempt
+def create_account_session_for_alerts(request):
+    try:
+        # Check if the request method is POST
+        if request.method != 'POST':
+            return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+        # Parse JSON body to retrieve connected account ID
+        body = json.loads(request.body.decode('utf-8'))
+        connected_account_id = body.get('connected_account_id')
+
+        if not connected_account_id:
+            return JsonResponse({'error': 'Connected account ID is required'}, status=400)
+
+        # Create the account session
+        account_session = stripe.AccountSession.create(
+            account=connected_account_id,
+            components={
+                "notification_banner": {
+                "enabled": True,
+                "features": {"external_account_collection": True},
+                },
+                "account_management": {
+                "enabled": True,
+                "features": {"external_account_collection": True},
                 },
             },
         )
@@ -1883,3 +1956,9 @@ def create_account_session(request):
     except Exception as e:
         print('An error occurred when calling the Stripe API to create an account session: ', e)
         return JsonResponse({'error': str(e)}, status=500)
+    
+
+
+
+
+
