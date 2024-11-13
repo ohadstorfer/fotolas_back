@@ -1259,6 +1259,30 @@ def create_images_and_waves(request):
         session_album.save()
 
         return Response({'message': 'Images created successfully without waves'}, status=status.HTTP_201_CREATED)
+    
+
+
+
+
+    # Check if all EXIF dates are identical
+    if len(set(exif_dates)) == 1:  # If all EXIF dates are identical
+        # If all EXIF dates are the same, create images without waves
+        images_to_create = [
+            Img(photo=original_url, WatermarkedPhoto=watermarked_url, SessionAlbum_id=session_album_id)
+            for original_url, watermarked_url in zip(original_urls, watermarked_urls)
+        ]
+        Img.objects.bulk_create(images_to_create)
+        
+        # Mark the SessionAlbum as active but not divided into waves
+        session_album = SessionAlbum.objects.get(id=session_album_id)
+        session_album.dividedToWaves = False
+        session_album.active = True
+        session_album.set_expiration_date()
+        session_album.save()
+
+        return Response({'message': 'Images created successfully without waves'}, status=status.HTTP_201_CREATED)
+    
+    
 
     images_and_waves = []
     current_wave = None

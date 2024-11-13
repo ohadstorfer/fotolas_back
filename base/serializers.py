@@ -1,4 +1,5 @@
 # serializers.py
+from django.forms import ValidationError
 from rest_framework import serializers
 from .models import  AlbumsPrices, AlbumsPricesForVideos, Chat, CustomUser, Message, Photographer,DefaultAlbumsPricesForImages, DefaultAlbumsPricesForVideos, Purchase, PurchaseItem, Spot, SessionAlbum, Img, SpotLike, Follower, Video, Wave
 from rest_framework import serializers
@@ -77,11 +78,19 @@ class PasswordResetSerializer(serializers.Serializer):
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['email', 'fullName', 'is_athlete', 'is_photographer', 'password','stripe_account_id']
+        fields = ['email', 'fullName', 'is_athlete', 'is_photographer', 'password', 'stripe_account_id']
 
     def create(self, validated_data):
+        # Convert the email to lowercase
+        email = validated_data['email'].lower()
+
+        # Check if the email already exists
+        if CustomUser.objects.filter(email=email).exists():
+            raise ValidationError( "A user with this email already exists.")
+
+        # Create the user with the lowercase email
         user = CustomUser.objects.create(
-            email=validated_data['email'],
+            email=email,
             fullName=validated_data['fullName'],
             is_athlete=validated_data.get('is_athlete', False),
             is_photographer=validated_data.get('is_photographer', False),
