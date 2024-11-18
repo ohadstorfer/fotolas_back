@@ -1287,7 +1287,7 @@ def create_images_and_waves(request):
     images_and_waves = []
     current_wave = None
     previous_datetime = None
-    TIME_GAP_THRESHOLD = 5  # seconds
+    TIME_GAP_THRESHOLD = 3  # seconds
 
     # Lists to keep track of images without EXIF data
     no_exif_images = []
@@ -1981,8 +1981,5 @@ def create_account_session_for_alerts(request):
         print('An error occurred when calling the Stripe API to create an account session: ', e)
         return JsonResponse({'error': str(e)}, status=500)
     
-
-
-
 
 

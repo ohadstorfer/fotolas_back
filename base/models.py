@@ -57,14 +57,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
     last_login = models.DateTimeField(blank=True, null=True)
-
     stripe_account_id = models.CharField(max_length=255, blank=True, null=True)
     verification_status = models.CharField(max_length=255, blank=True, null=True)
 
     chats = models.ManyToManyField('Chat', related_name='user_chats', blank=True)
 
     objects = CustomUserManager()
-
     USERNAME_FIELD = 'email'
     EMAIL_FIELD = 'email'
     REQUIRED_FIELDS = ['password', 'fullName']
