@@ -78,7 +78,7 @@ class PasswordResetSerializer(serializers.Serializer):
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['email', 'fullName', 'is_athlete', 'is_photographer', 'password', 'stripe_account_id']
+        fields = ['email', 'fullName', 'is_athlete', 'is_photographer', 'password', 'stripe_account_id', 'verification_status']
 
     def create(self, validated_data):
         # Convert the email to lowercase
