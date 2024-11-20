@@ -1869,7 +1869,7 @@ def create_checkout_session(request):
                 },
             ],
             payment_intent_data={
-                "application_fee_amount": int(amount * 0.2),  # Example fee: 20% of the amount
+                "application_fee_amount": int(amount * 0.2) + 100,
                 "transfer_data": {"destination": connected_account_id},
             },
             mode="payment",
