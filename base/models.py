@@ -106,12 +106,13 @@ class SessionAlbum(models.Model):
     photographer = models.ForeignKey(Photographer, on_delete=models.CASCADE)
     cover_image = models.CharField(max_length=255, null=True, blank=True)
     videos = models.BooleanField(default=False)
+    videosPerAlbums = models.BooleanField(default=False)
     dividedToWaves = models.BooleanField(null=True)
     active = models.BooleanField(default=False)
     expiration_date = models.DateTimeField(null=True, blank=True)
 
     def set_expiration_date(self):
-        if self.videos:
+        if self.videos or self.videosPerAlbums:
             self.expiration_date = self.created_at + timedelta(days=5)
         else:
             self.expiration_date = self.created_at + timedelta(days=30)
