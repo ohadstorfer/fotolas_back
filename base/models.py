@@ -147,6 +147,7 @@ class Img(models.Model):
 class Video(models.Model):
     video = models.CharField(max_length=255, null=True, blank=True)
     WatermarkedVideo = models.CharField(max_length=255, null=True, blank=True)
+    wave = models.ForeignKey(Wave, on_delete=models.CASCADE, null=True,blank=True)
     SessionAlbum = models.ForeignKey(SessionAlbum, on_delete=models.CASCADE, null=True, blank=True)
     img = models.CharField(max_length=255, null=True, blank=True)
     
