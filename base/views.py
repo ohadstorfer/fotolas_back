@@ -1510,7 +1510,7 @@ class GetImagesBySessionAlbumView(APIView):
     def get(self, request, session_album_id):
         try:
             session_album = SessionAlbum.objects.get(id=session_album_id)
-            images = Img.objects.filter(SessionAlbum=session_album).order_by('-id')
+            images = Img.objects.filter(SessionAlbum=session_album)
 
             paginator = self.pagination_class()
             paginated_images = paginator.paginate_queryset(images, request)
@@ -1531,7 +1531,7 @@ class GetImagesBySessionAlbumView(APIView):
 @api_view(['GET'])
 def get_waves_for_session_album(request, session_album_id):
     try:
-        waves = Wave.objects.filter(session_album=session_album_id).order_by('-id')
+        waves = Wave.objects.filter(session_album=session_album_id)
         
         # Paginate the queryset
         paginator = CustomPageNumberPagination()
@@ -1657,14 +1657,14 @@ def get_original_videos(request, session_album_id):
 @api_view(['GET'])
 def get_watermarked_videos(request, session_album_id):
     session_album = get_object_or_404(SessionAlbum, id=session_album_id)
-    videos = Video.objects.filter(SessionAlbum=session_album).values('WatermarkedVideo').order_by('-id')
+    videos = Video.objects.filter(SessionAlbum=session_album).values('WatermarkedVideo')
     WatermarkedVideos = [video['WatermarkedVideo'] for video in videos if video['WatermarkedVideo']]
     return Response(WatermarkedVideos)
 
 @api_view(['GET'])
 def get_videos_by_session(request, session_album_id):
     session_album = get_object_or_404(SessionAlbum, id=session_album_id)
-    videos = Video.objects.filter(SessionAlbum=session_album).order_by('-id')
+    videos = Video.objects.filter(SessionAlbum=session_album)
 
     paginator = CustomPageNumberPagination()
     paginated_videos = paginator.paginate_queryset(videos, request)
