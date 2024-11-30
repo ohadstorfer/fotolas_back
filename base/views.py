@@ -1128,7 +1128,7 @@ def presigned_urls_for_original_videos(request):
     # Generate presigned URLs for batch upload
     presigned_urls = []
     for _ in range(num_urls):
-        file_extension = request.GET.get('ext', 'mp4')  # Default to mp4 if not specified
+        file_extension = request.GET.get('ext')  # Default to mp4 if not specified
         unique_filename = f'{uuid.uuid4()}.{file_extension}'
         
         presigned_url = s3.generate_presigned_url(
