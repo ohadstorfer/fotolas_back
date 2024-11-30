@@ -1113,6 +1113,7 @@ def presigned_urls_for_watermarked(request):
 
 @api_view(['GET'])
 def presigned_urls_for_original_videos(request):
+
     # Configure S3 client with Transfer Acceleration
     s3 = boto3.client(
         's3',
@@ -1122,23 +1123,30 @@ def presigned_urls_for_original_videos(request):
         config=Config(s3={'use_accelerate_endpoint': True})
     )
 
-    # Number of presigned URLs to generate (assuming each URL corresponds to an image)
     num_urls = int(request.GET.get('num_urls', 1))  # Default to 1 if not specified
-    
-    # Generate presigned URLs for batch upload
+    content_type = request.GET.get('content_type', 'video/mp4')  # Default to 'video/mp4'
+    file_extension = request.GET.get('ext', 'mp4')  # Default to 'mp4'
+
+    allowed_extensions = {'mp4', 'mov', 'avi', 'mkv'}
+    if file_extension not in allowed_extensions:
+        return JsonResponse({'error': 'Unsupported file extension'}, status=400)
+
     presigned_urls = []
     for _ in range(num_urls):
-        unique_filename = f'{uuid.uuid4()}.mp4'
-        
+        unique_filename = f'{uuid.uuid4()}.{file_extension}'
+
         presigned_url = s3.generate_presigned_url(
             'put_object',
-            Params={'Bucket': 'surfingram-original-video', 'Key': unique_filename},  # Customize Key as needed
-            ExpiresIn=360000  # URL expiration time in seconds
+            Params={
+                'Bucket': 'surfingram-original-video',
+                'Key': unique_filename,
+                'ContentType': content_type,  # Include the content type in the URL
+            },
+            ExpiresIn=3600  # Set expiration time
         )
         presigned_urls.append(presigned_url)
-    
-    return JsonResponse({'urls': presigned_urls})
 
+    return JsonResponse({'urls': presigned_urls})
 
 
 @api_view(['GET'])
