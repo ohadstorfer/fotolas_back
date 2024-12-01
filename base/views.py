@@ -1111,7 +1111,7 @@ def presigned_urls_for_watermarked(request):
 
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 def presigned_urls_for_original_videos(request):
     # Configure S3 client with Transfer Acceleration
     s3 = boto3.client(
@@ -1122,21 +1122,36 @@ def presigned_urls_for_original_videos(request):
         config=Config(s3={'use_accelerate_endpoint': True})
     )
 
-    # Number of presigned URLs to generate (assuming each URL corresponds to an image)
-    num_urls = int(request.GET.get('num_urls', 1))  # Default to 1 if not specified
+    # Get file types from request
+    file_types = request.data.get('file_types', [])
+    if not file_types:
+        return JsonResponse({'error': 'No file types provided'}, status=400)
     
-    # Generate presigned URLs for batch upload
+    # Generate presigned URLs for each file type
     presigned_urls = []
-    for _ in range(num_urls):
-        unique_filename = f'{uuid.uuid4()}.mov'
-        
+    for file_type in file_types:
+        # Determine file extension based on MIME type
+        extension = ''
+        if file_type == 'video/mp4':
+            extension = 'mp4'
+        elif file_type == 'video/webm':
+            extension = 'webm'
+        elif file_type == 'video/quicktime':
+            extension = 'mov'
+        else:
+            continue  # Skip unsupported types
+
+        unique_filename = f'{uuid.uuid4()}.{extension}'
         presigned_url = s3.generate_presigned_url(
             'put_object',
-            Params={'Bucket': 'surfingram-original-video', 'Key': unique_filename},  # Customize Key as needed
-            ExpiresIn=360000  # URL expiration time in seconds
+            Params={'Bucket': 'surfingram-original-video', 'Key': unique_filename},
+            ExpiresIn=3600  # URL expiration time in seconds
         )
         presigned_urls.append(presigned_url)
-    
+
+    if not presigned_urls:
+        return JsonResponse({'error': 'No valid file types provided'}, status=400)
+
     return JsonResponse({'urls': presigned_urls})
 
 
