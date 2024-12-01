@@ -1111,7 +1111,7 @@ def presigned_urls_for_watermarked(request):
 
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 def presigned_urls_for_original_videos(request):
     # Configure S3 client with Transfer Acceleration
     s3 = boto3.client(
