@@ -1122,10 +1122,13 @@ def presigned_urls_for_original_videos(request):
         config=Config(s3={'use_accelerate_endpoint': True})
     )
 
-    # Get file types from request
-    file_types = request.data.get('file_types', [])
-    if not file_types:
+    # Get file types from query parameters
+    file_types_param = request.GET.get('file_types', '')
+    if not file_types_param:
         return JsonResponse({'error': 'No file types provided'}, status=400)
+
+    # Convert file_types to a list
+    file_types = file_types_param.split(',')
     
     # Generate presigned URLs for each file type
     presigned_urls = []
@@ -1153,6 +1156,10 @@ def presigned_urls_for_original_videos(request):
         return JsonResponse({'error': 'No valid file types provided'}, status=400)
 
     return JsonResponse({'urls': presigned_urls})
+
+
+
+
 
 
 
