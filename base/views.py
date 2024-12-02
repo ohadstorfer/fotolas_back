@@ -1725,7 +1725,7 @@ def create_account_link(request):
         account_link = stripe.AccountLink.create(
             account=connected_account_id,
             return_url=f"https://surfpik.com/VerificationProccess",
-            refresh_url=f"https://surfpik.com/VerificationProccess",
+            refresh_url=f"https://surfpik.com/RefreshURL",
             type="account_onboarding",
         )
 
