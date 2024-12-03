@@ -675,20 +675,7 @@ class SessionAlbumListAPIView(generics.ListAPIView):
     pagination_class = CustomPageNumberPagination
 
     def get_queryset(self):
-        now = timezone.now()
-        # Filter for active SessionAlbums and calculate expiration date
-        queryset = SessionAlbum.objects.filter(active=True).annotate(
-            calculated_expiration_date=Case(
-                When(videos=True, then=F('created_at') + timedelta(days=5)),
-                When(videos=False, then=F('created_at') + timedelta(days=30)),
-                default=None
-            )
-        )
-
-        # Calculate remaining days until expiration
-        queryset = queryset.annotate(
-            days_until_expiration=F('calculated_expiration_date') - now
-        ).filter(days_until_expiration__gte=timedelta(days=0)).order_by('-id')
+        queryset = SessionAlbum.objects.filter(active=True).order_by('-id')
 
         return queryset
 

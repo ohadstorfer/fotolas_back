@@ -266,7 +266,7 @@ class SessionAlbumWithDetailsSerializer(serializers.ModelSerializer):
             expiration_date = obj.created_at + expiration_duration
             remaining_time = expiration_date - timezone.now()
             # Return remaining days, ensuring it's not negative
-            return max(0, remaining_time.days)
+            return remaining_time.days
         return None
     
 
