@@ -1224,7 +1224,6 @@ def invoke_lambda_view(request):
         bucket = request.GET.get('bucket')  # Example for GET request params
         filenames = request.GET.getlist('filenames')
         zipFileName= request.GET.get('zipFileName')
-        user_email = "ohad.storfer@gmail.com"
 
         if not bucket or not filenames or not zipFileName:
             return JsonResponse({'error': 'Missing required parameters'}, status=400)
@@ -1247,14 +1246,8 @@ def invoke_lambda_view(request):
         # Parse the Lambda response
         lambda_response = json.loads(response['Payload'].read())
         if response['StatusCode'] == 200:
-            # Send email with download button
-            download_url = lambda_response.get('download_url')  # Replace with the actual key returned by Lambda
-            if download_url:
-                send_download_email(user_email, download_url)  # Call email function here
-                return JsonResponse({'message': 'Email sent successfully', 'url': download_url}, status=200)
-            else:
-                return JsonResponse({'error': 'Download URL not returned by Lambda'}, status=500)
-
+            # Assuming Lambda returns a JSON body with the zip file URL
+            return JsonResponse(lambda_response, status=200)
         else:
             # Handle Lambda errors
             return JsonResponse({'error': 'Lambda function failed', 'details': lambda_response}, status=500)
@@ -1263,32 +1256,10 @@ def invoke_lambda_view(request):
         return JsonResponse({'error': str(e)}, status=500)
     
 
-    
-
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
 
 
-def send_download_email(user_email, download_url):
-    # Use a custom HTML template for the email
-    # subject = "Your Download is Ready"
-    # html_message = render_to_string('emails/download_email.html', {'download_url': download_url})
-    # plain_message = strip_tags(html_message)  # Fallback to plain text if HTML isn't supported
 
-    # send_mail(
-    #     subject,
-    #     plain_message,
-    #     settings.DEFAULT_FROM_EMAIL,
-    #     [user_email],
-    #     html_message=html_message,
-    # )
 
-    send_mail(
-                "Your Download is Ready",
-                f"Click the button below to download your files: {download_url}",
-                settings.DEFAULT_FROM_EMAIL,
-                [user_email],
-            )
     
 
 
