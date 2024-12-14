@@ -372,7 +372,7 @@ class CreatePurchaseWithImagesView(APIView):
                     else:
                         return Response(purchase_item_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                return Response(purchase_serializer.data, status=status.HTTP_201_CREATED)
+                return Response({"id": purchase.id}, status=status.HTTP_201_CREATED)
             return Response(purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         except Img.DoesNotExist:
@@ -414,7 +414,7 @@ class CreatePurchaseWithVideosView(APIView):
                     else:
                         return Response(purchase_item_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                return Response(purchase_serializer.data, status=status.HTTP_201_CREATED)
+                return Response({"id": purchase.id}, status=status.HTTP_201_CREATED)
             return Response(purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         except Video.DoesNotExist:
@@ -466,7 +466,7 @@ class CreatePurchaseWithWavesView(APIView):
                 purchase.total_item_quantity = total_item_quantity
                 purchase.save()
 
-                return Response(purchase_serializer.data, status=status.HTTP_201_CREATED)
+                return Response({"id": purchase.id}, status=status.HTTP_201_CREATED)
             return Response(purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         except Wave.DoesNotExist:
@@ -1134,7 +1134,7 @@ def presigned_urls_for_original_videos(request):
         unique_filename = f'{uuid.uuid4()}.{extension}'
         presigned_url = s3.generate_presigned_url(
             'put_object',
-            Params={'Bucket': 'surfingram-original-video', 'Key': unique_filename},
+            Params={'Bucket': 'surfingram-original-video', 'Key': unique_filename, 'ContentType': file_type},
             ExpiresIn=3600  # URL expiration time in seconds
         )
         presigned_urls.append(presigned_url)
@@ -1209,6 +1209,49 @@ def presigned_urls_for_profile_pictures(request):
         presigned_urls.append(presigned_url)
     
     return JsonResponse({'urls': presigned_urls})
+
+
+
+
+def invoke_lambda_view(request):
+    try:
+        # Extract input from the request (e.g., bucket, filenames, purchaseId)
+        bucket = request.GET.get('bucket')  # Example for GET request params
+        filenames = request.GET.getlist('filenames')
+        zipFileName= request.GET.get('zipFileName')
+
+        if not bucket or not filenames or not zipFileName:
+            return JsonResponse({'error': 'Missing required parameters'}, status=400)
+
+        # Initialize Boto3 Lambda client
+        lambda_client = boto3.client('lambda', region_name='us-east-2')
+
+        # Lambda invocation parameters
+        payload = {
+            'bucket': bucket,
+            'filenames': filenames,
+            'zipFileName': zipFileName
+        }
+        response = lambda_client.invoke(
+            FunctionName='zip-collection',
+            InvocationType='RequestResponse',  # Synchronous invocation
+            Payload=json.dumps(payload),
+        )
+
+        # Parse the Lambda response
+        lambda_response = json.loads(response['Payload'].read())
+        if response['StatusCode'] == 200:
+            # Assuming Lambda returns a JSON body with the zip file URL
+            return JsonResponse(lambda_response, status=200)
+        else:
+            # Handle Lambda errors
+            return JsonResponse({'error': 'Lambda function failed', 'details': lambda_response}, status=500)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+
+
 
 
 import requests
@@ -1384,6 +1427,49 @@ def create_images(images_and_waves):
 
 
 
+
+
+
+
+
+class CreateVideosView(APIView):
+    def post(self, request, *args, **kwargs):
+        videos_data = request.data.get('videos', [])
+        session_album_id = request.data.get('session_album')
+
+        if not videos_data or not session_album_id:
+            return Response({'error': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch session album once
+        session_album = SessionAlbum.objects.filter(id=session_album_id).first()
+
+        if not session_album:
+            return Response({'error': 'Session album not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        videos = []
+        for video_data in videos_data:
+            original_url = video_data.get('original')
+            transformed_url = video_data.get('transformed')
+
+            if not original_url or not transformed_url:
+                return Response({'error': 'Invalid video data'}, status=status.HTTP_400_BAD_REQUEST)
+
+            video = Video(video=original_url, WatermarkedVideo=transformed_url, SessionAlbum=session_album)
+            video.save()
+            videos.append(video)
+
+        # Use the already fetched session_album instance
+        session_album = SessionAlbum.objects.get(id=session_album_id)
+        session_album.active = True
+        session_album.set_expiration_date()
+        session_album.save()
+
+        serializer = VideoSerializer(videos, many=True)
+        return Response({'message': 'Videos created successfully', 'videos': serializer.data}, status=status.HTTP_201_CREATED)
+
+
+
+
 @api_view(['POST'])
 def create_videos(request):
     video_urls = request.data.get('video', [])
@@ -1443,40 +1529,59 @@ def create_videos(request):
 
 
 
-class CreateVideosView(APIView):
+class CreateVideoPerAlbums(APIView):
     def post(self, request, *args, **kwargs):
-        videos_data = request.data.get('videos', [])
+        videos_data = request.data.get('videos', [])  # Array of arrays of URLs
         session_album_id = request.data.get('session_album')
 
         if not videos_data or not session_album_id:
             return Response({'error': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Fetch session album once
         session_album = SessionAlbum.objects.filter(id=session_album_id).first()
-
         if not session_album:
             return Response({'error': 'Session album not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        videos = []
-        for video_data in videos_data:
-            original_url = video_data.get('original')
-            transformed_url = video_data.get('transformed')
+        created_waves = []
+        created_videos = []
 
-            if not original_url or not transformed_url:
-                return Response({'error': 'Invalid video data'}, status=status.HTTP_400_BAD_REQUEST)
+        for wave_data in videos_data:
+            wave = Wave.objects.create(session_album=session_album)
 
-            video = Video(video=original_url, WatermarkedVideo=transformed_url, SessionAlbum=session_album)
-            video.save()
-            videos.append(video)
+            # Set the cover image as the first 'img' in the array, if available
+            if wave_data and 'img' in wave_data[0]:
+                wave.cover_image = wave_data[0]['img']
+            wave.save()
 
-        # Use the already fetched session_album instance
-        session_album = SessionAlbum.objects.get(id=session_album_id)
+            created_waves.append(wave)
+
+            for video_data in wave_data:
+                original_url = video_data.get('original')
+                transformed_url = video_data.get('transformed')
+                img_url = video_data.get('img')
+
+                if not original_url or not transformed_url:
+                    return Response({'error': 'Invalid video data'}, status=status.HTTP_400_BAD_REQUEST)
+
+                video = Video.objects.create(
+                    video=original_url,
+                    WatermarkedVideo=transformed_url,
+                    img=img_url,
+                    wave=wave,
+                    SessionAlbum=session_album
+                )
+                created_videos.append(video)
+
+        # Set session album to active and update expiration date
         session_album.active = True
         session_album.set_expiration_date()
         session_album.save()
 
-        serializer = VideoSerializer(videos, many=True)
-        return Response({'message': 'Videos created successfully', 'videos': serializer.data}, status=status.HTTP_201_CREATED)
+        serializer = VideoSerializer(created_videos, many=True)
+        return Response({
+            'message': 'Waves and Videos created successfully',
+            'waves': [{'id': wave.id, 'videos': [video.id for video in wave.video_set.all()]} for wave in created_waves],
+            'videos': serializer.data
+        }, status=status.HTTP_201_CREATED)
     
 
 
@@ -1990,5 +2095,10 @@ def create_account_session_for_alerts(request):
         print('An error occurred when calling the Stripe API to create an account session: ', e)
         return JsonResponse({'error': str(e)}, status=500)
     
+
+
+
+
+
 
 
