@@ -1233,7 +1233,7 @@ def invoke_lambda_view(request):
             'zipFileName': zipFileName
         }
         response = lambda_client.invoke(
-            FunctionName='zip-collection',
+            FunctionName='arn:aws:lambda:us-east-2:992382571106:function:ZipS3Files',
             InvocationType='RequestResponse',  # Synchronous invocation
             Payload=json.dumps(payload),
         )
