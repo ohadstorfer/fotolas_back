@@ -1287,12 +1287,12 @@ def send_download_email(user_email, download_url):
         html_message=html_message,
     )
 
-    send_mail(
-                "Your Download is Ready",
-                f"Click the button below to download your files: {download_url}",
-                settings.DEFAULT_FROM_EMAIL,
-                [user_email],
-            )
+    # send_mail(
+    #             "Your Download is Ready",
+    #             f"Click the button below to download your files: {download_url}",
+    #             settings.DEFAULT_FROM_EMAIL,
+    #             [user_email],
+    #         )
     
 
 
