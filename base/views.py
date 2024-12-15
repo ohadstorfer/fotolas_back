@@ -1248,7 +1248,8 @@ def invoke_lambda_view(request):
         lambda_response = json.loads(response['Payload'].read())
         if response['StatusCode'] == 200:
             # Send email with download button
-            download_url = lambda_response.get('body', {}).get('publicUrl')  # Replace with the actual key returned by Lambda
+            body = json.loads(lambda_response.get('body', '{}'))  # Convert the body string to a dictionary
+            download_url = body.get('publicUrl')
             if download_url:
                 send_download_email(user_email, download_url)  # Call email function here
                 return JsonResponse({'message': 'Email sent successfully', 'url': download_url}, status=200)
