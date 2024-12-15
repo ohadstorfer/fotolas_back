@@ -1220,11 +1220,11 @@ def presigned_urls_for_profile_pictures(request):
 
 def invoke_lambda_view(request):
     try:
-        # Extract input from the request (e.g., bucket, filenames, purchaseId)
-        bucket = request.GET.get('bucket')  # Example for GET request params
+        
+        bucket = request.GET.get('bucket')
         filenames = request.GET.getlist('filenames')
         zipFileName= request.GET.get('zipFileName')
-        user_email = "ohad.storfer@gmail.com"
+        user_email = request.GET.get('user_email')
 
         if not bucket or not filenames or not zipFileName:
             return JsonResponse({'error': 'Missing required parameters'}, status=400)
