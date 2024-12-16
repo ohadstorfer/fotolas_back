@@ -339,40 +339,7 @@ class PurchaseItemDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-class CreatePurchaseView(APIView):
-    def post(self, request, *args, **kwargs):
-        try:
-            # Extract purchase data from request
-            purchase_data = {
-                "photographer": request.data.get('photographer_id'),
-                "photographer_name": request.data.get('photographer_name'),
-                "sessDate": request.data.get('sessDate'),
-                "SessionAlbum": request.data.get('session_album_id'),
-                "spot_name": request.data.get('spot_name'),
-                "surfer": request.data.get('surfer_id'),
-                "surfer_name": request.data.get('surfer_name'),
-                "total_item_quantity": request.data.get('total_item_quantity'),
-                "total_price": request.data.get('total_price'),
-                "user_email": request.data.get('user_email'),
-                "type": request.data.get('type'),
-                "filenames": request.data.get('filenames', [])
-            }
 
-            # Serialize and save the purchase data without the zipFileName
-            purchase_serializer = PurchaseSerializer(data=purchase_data)
-            if purchase_serializer.is_valid():
-                purchase = purchase_serializer.save()
-
-                # Dynamically set the zipFileName using the created purchase ID
-                purchase.zipFileName = f"surfpik_{purchase.id}.zip"
-                purchase.save(update_fields=['zipFileName'])
-
-                return Response({"id": purchase.id}, status=status.HTTP_201_CREATED)
-
-            return Response(purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -2279,3 +2246,52 @@ def send_download_email(user_email, download_url):
     #             [user_email],
     #         )
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class CreatePurchaseView(APIView):
+    def post(self, request, *args, **kwargs):
+        try:
+            # Extract purchase data from request
+            purchase_data = {
+                "photographer": request.data.get('photographer_id'),
+                "photographer_name": request.data.get('photographer_name'),
+                "sessDate": request.data.get('sessDate'),
+                "SessionAlbum": request.data.get('session_album_id'),
+                "spot_name": request.data.get('spot_name'),
+                "surfer": request.data.get('surfer_id'),
+                "surfer_name": request.data.get('surfer_name'),
+                "total_item_quantity": request.data.get('total_item_quantity'),
+                "total_price": request.data.get('total_price'),
+                "user_email": request.data.get('user_email'),
+                "type": request.data.get('type'),
+                "filenames": request.data.get('filenames', [])
+            }
+
+            # Serialize and save the purchase data without the zipFileName
+            purchase_serializer = PurchaseSerializer(data=purchase_data)
+            if purchase_serializer.is_valid():
+                purchase = purchase_serializer.save()
+
+                # Dynamically set the zipFileName using the created purchase ID
+                purchase.zipFileName = f"surfpik_{purchase.id}.zip"
+                purchase.save(update_fields=['zipFileName'])
+
+                return Response({"id": purchase.id}, status=status.HTTP_201_CREATED)
+
+            return Response(purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
