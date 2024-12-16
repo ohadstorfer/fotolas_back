@@ -2119,17 +2119,17 @@ def handle_account_update(account):
 
 
 
-
+endpoint_secret_lambda = config('endpoint_secret_lambda')
 
 @csrf_exempt
 def stripe_webhook_invoke_lambda(request):
     payload = request.body.decode('utf-8')
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-    endpoint_secret = endpoint_secret  
+    endpoint_secret_lambda = endpoint_secret_lambda  
 
     # Verify the webhook signature to ensure the request is from Stripe
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret_lambda)
     except ValueError as e:
         return JsonResponse({'error': 'Invalid payload'}, status=400)
     except stripe.error.SignatureVerificationError as e:
