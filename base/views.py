@@ -2113,7 +2113,7 @@ def stripe_webhook_invoke_lambda(request):
                 purchase = Purchase.objects.get(id=purchase_id)
 
                 # Determine the bucket based on the type
-                if purchase.type == "video":
+                if purchase.type == "videos":
                     bucket = "surfingram-original-video"
                 elif purchase.type in ["waves", "singleImages"]:
                     bucket = "surfingram-original-video"
