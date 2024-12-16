@@ -2,7 +2,7 @@
 from django import views
 from django.urls import path
 from .views import (
-     AlbumsPricesBySess, AlbumsPricesDetailView, AlbumsPricesForVideosBySess, AlbumsPricesForVideosDetailView, AlbumsPricesForVideosListCreateView, AlbumsPricesListCreateView, ChatDetailView, ChatListCreateView, CreatePurchaseWithImagesView, CreatePurchaseWithVideosView, CreatePurchaseWithWavesView, CreateVideoPerAlbums, CreateVideosView, CustomUserListCreateView, CustomUserDetailView, FollowersByPhotographerListView, FollowersByUserListView,  GetImagesBySessionAlbumView, GetPurchasedItemsBySurfer, GetPurchasesByPhotographerName, MessageDetailView, MessageListCreateView, MyTokenObtainPairView, PasswordResetRequestView, PasswordResetView, PhotographerByUserIdView, PhotographerDetailUpdateView, 
+     AlbumsPricesBySess, AlbumsPricesDetailView, AlbumsPricesForVideosBySess, AlbumsPricesForVideosDetailView, AlbumsPricesForVideosListCreateView, AlbumsPricesListCreateView, ChatDetailView, ChatListCreateView, CreatePurchaseView, CreatePurchaseWithImagesView, CreatePurchaseWithVideosView, CreatePurchaseWithWavesView, CreateVideoPerAlbums, CreateVideosView, CustomUserListCreateView, CustomUserDetailView, FollowersByPhotographerListView, FollowersByUserListView,  GetImagesBySessionAlbumView, GetPurchasedItemsBySurfer, GetPurchasesByPhotographerName, MessageDetailView, MessageListCreateView, MyTokenObtainPairView, PasswordResetRequestView, PasswordResetView, PhotographerByUserIdView, PhotographerDetailUpdateView, 
     PhotographerListCreateView, PhotographerDetailView, PurchaseDetailView, PurchaseItemDetailView, PurchaseItemListCreateView, PurchaseListCreateView, PurchasesByPhotographerView, PurchasesBySurferView, SessionAlbumByPhotographer, SessionAlbumBySpot, SessionAlbumDetailByIDAPIView, SessionAlbumListAPIView, SpotLikesBySpotListView, SpotLikesByUserListView,
     SpotListCreateView, SpotDetailView,
     SessionAlbumListCreateView, SessionAlbumDetailView,
@@ -10,7 +10,7 @@ from .views import (
     SpotLikeListCreateView, SpotLikeDetailView,
     FollowerListCreateView, FollowerDetailView, ValidateTokenView,
     DefaultAlbumsPricesForImagesCreateView, DefaultAlbumsPricesForImagesUpdateView, DefaultAlbumsPricesForImagesListView,  DefaultAlbumsPricesForVideosCreateView, DefaultAlbumsPricesForVideosUpdateView, DefaultAlbumsPricesForVideosListView, create_account, create_account_link, create_account_session, create_account_session_for_alerts, create_checkout_session,
-    create_images_and_waves, create_videos, get_batch_presigned_urlssss, get_images_by_ids, get_images_for_multiple_waves, get_images_for_wave, DeactivateSessionAlbum,  get_original_videos, get_videos_by_ids, get_videos_by_session, get_watermarked_photos_by_wave, get_watermarked_videos, get_waves, get_waves_for_session_album, invoke_lambda_view, presigned_urls_for_original_videos, presigned_urls_for_originals, presigned_urls_for_profile_pictures, presigned_urls_for_watermarked, presigned_urls_for_watermarked_videos, stripe_webhook, 
+    create_images_and_waves, create_videos, get_batch_presigned_urlssss, get_images_by_ids, get_images_for_multiple_waves, get_images_for_wave, DeactivateSessionAlbum,  get_original_videos, get_videos_by_ids, get_videos_by_session, get_watermarked_photos_by_wave, get_watermarked_videos, get_waves, get_waves_for_session_album, invoke_lambda_view, presigned_urls_for_original_videos, presigned_urls_for_originals, presigned_urls_for_profile_pictures, presigned_urls_for_watermarked, presigned_urls_for_watermarked_videos, stripe_webhook, stripe_webhook_invoke_lambda, 
 )
 
 urlpatterns = [
@@ -56,6 +56,7 @@ urlpatterns = [
     path('Purchases/<int:pk>/', PurchaseDetailView.as_view(), name='Purchase-detail'),
     path('purchase-items/', PurchaseItemListCreateView.as_view(), name='purchase-item-list-create'),
     path('purchase-items/<int:pk>/', PurchaseItemDetailView.as_view(), name='purchase-item-detail'),
+    path('create-purchase/', CreatePurchaseView.as_view(), name='create-purchase'),
     path('create-purchase-with-images/', CreatePurchaseWithImagesView.as_view(), name='create_purchase_with_images'),
     path('create-purchase-with-videos/', CreatePurchaseWithVideosView.as_view(), name='create_purchase_with_videos'),
     path('create-purchase-with-waves/', CreatePurchaseWithWavesView.as_view(), name='create-purchase-with-waves'),
@@ -130,6 +131,7 @@ urlpatterns = [
     path("account_link/", create_account_link, name="create_account_link"),
     path("account/", create_account, name="create_account"),
     path('stripe/webhook/', stripe_webhook, name='stripe-webhook'),
+    path('webhook/stripe/invoke_lambda', stripe_webhook_invoke_lambda, name='stripe-webhook-invoke-lambda'),
     path('api/create-checkout-session/', create_checkout_session, name='create_checkout_session'),
     path('create_account_session/', create_account_session, name='create_account_session'),
     path('create_account_session_for_alerts/', create_account_session_for_alerts, name='create_account_session_for_alerts'),

@@ -337,6 +337,50 @@ class PurchaseItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PurchaseItemSerializer
 
 
+
+
+class CreatePurchaseView(APIView):
+    def post(self, request, *args, **kwargs):
+        try:
+            # Extract purchase data from request
+            purchase_data = {
+                "photographer": request.data.get('photographer_id'),
+                "photographer_name": request.data.get('photographer_name'),
+                "sessDate": request.data.get('sessDate'),
+                "SessionAlbum": request.data.get('session_album_id'),
+                "spot_name": request.data.get('spot_name'),
+                "surfer": request.data.get('surfer_id'),
+                "surfer_name": request.data.get('surfer_name'),
+                "total_item_quantity": request.data.get('total_item_quantity'),
+                "total_price": request.data.get('total_price'),
+                "user_email": request.data.get('user_email'),
+                "type": request.data.get('type'),
+                "filenames": request.data.get('filenames', [])
+            }
+
+            # Serialize and save the purchase data without the zipFileName
+            purchase_serializer = PurchaseSerializer(data=purchase_data)
+            if purchase_serializer.is_valid():
+                purchase = purchase_serializer.save()
+
+                # Dynamically set the zipFileName using the created purchase ID
+                purchase.zipFileName = f"surfpik_{purchase.id}.zip"
+                purchase.save(update_fields=['zipFileName'])
+
+                return Response({"id": purchase.id}, status=status.HTTP_201_CREATED)
+
+            return Response(purchase_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
+
+
+
 class CreatePurchaseWithImagesView(APIView):
     def post(self, request, *args, **kwargs):
         try:
@@ -1218,82 +1262,7 @@ def presigned_urls_for_profile_pictures(request):
 
 
 
-def invoke_lambda_view(request):
-    try:
-        
-        bucket = request.GET.get('bucket')
-        filenames = request.GET.getlist('filenames')
-        zipFileName= request.GET.get('zipFileName')
-        user_email = request.GET.get('user_email')
 
-        if not bucket or not filenames or not zipFileName:
-            return JsonResponse({'error': 'Missing required parameters'}, status=400)
-
-        # Initialize Boto3 Lambda client
-        lambda_client = boto3.client('lambda', region_name='us-east-2')
-
-        # Lambda invocation parameters
-        payload = {
-            'bucket': bucket,
-            'filenames': filenames,
-            'zipFileName': zipFileName
-        }
-        response = lambda_client.invoke(
-            FunctionName='arn:aws:lambda:us-east-2:992382571106:function:ZipS3Files',
-            InvocationType='RequestResponse',  # Synchronous invocation
-            Payload=json.dumps(payload),
-        )
-
-        # Parse the Lambda response
-        lambda_response = json.loads(response['Payload'].read())
-        if response['StatusCode'] == 200:
-            # Send email with download button
-            body = json.loads(lambda_response.get('body', '{}'))  # Convert the body string to a dictionary
-            download_url = body.get('publicUrl')
-            if download_url:
-                send_download_email(user_email, download_url)  # Call email function here
-                return JsonResponse({'message': 'Email sent successfully', 'url': download_url}, status=200)
-            else:
-                return JsonResponse({'error': 'Download URL not returned by Lambda'}, status=500)
-
-        else:
-            # Handle Lambda errors
-            return JsonResponse({'error': 'Lambda function failed', 'details': lambda_response}, status=500)
-
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-    
-
-
-    
-
-    
-
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
-
-
-def send_download_email(user_email, download_url):
-    # Use a custom HTML template for the email
-    subject = "Your Download is Ready"
-    html_message = render_to_string('emails/download_email.html', {'download_url': download_url})
-    plain_message = strip_tags(html_message)  # Fallback to plain text if HTML isn't supported
-
-    send_mail(
-        subject,
-        plain_message,
-        settings.DEFAULT_FROM_EMAIL,
-        [user_email],
-        html_message=html_message,
-    )
-
-    # send_mail(
-    #             "Your Download is Ready",
-    #             f"Click the button below to download your files: {download_url}",
-    #             settings.DEFAULT_FROM_EMAIL,
-    #             [user_email],
-    #         )
-    
 
 
 
@@ -1925,69 +1894,6 @@ def create_account(request):
 
 
 
-endpoint_secret = config('endpoint_secret')
-
-
-
-
-
-@csrf_exempt
-def stripe_webhook(request):
-    payload = request.body
-    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-
-    try:
-        event = stripe.Webhook.construct_event(
-            payload=payload, sig_header=sig_header, secret=endpoint_secret
-        )
-    except ValueError:
-        return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError:
-        return HttpResponse(status=400)
-
-    if event['type'] == 'account.updated':
-        account = event['data']['object']
-        handle_account_update(account)
-
-    return JsonResponse({'success': True})
-
-def handle_account_update(account):
-    stripe_account_id = account.get('id')
-    disabled_reason = account.get('requirements', {}).get('disabled_reason')
-
-    user = CustomUser.objects.filter(stripe_account_id=stripe_account_id).first()
-    if user:
-        if disabled_reason is None:
-            user.verification_status = 'Verified'
-            user.is_photographer = True
-            user.save()
-
-            # Create Photographer instance if it doesn't exist and set the stripe_account_id
-            photographer, created = Photographer.objects.get_or_create(user=user, stripe_account_id=stripe_account_id)
-
-            # Create default pricing for images and videos
-            if created:
-                # Default pricing for images
-                DefaultAlbumsPricesForImages.objects.create(
-                    photographer=photographer,
-                    price_1_to_5=20.0,
-                    price_6_to_50=25.0,
-                    price_51_plus=30.0
-                )
-
-                # Default pricing for videos
-                DefaultAlbumsPricesForVideos.objects.create(
-                    photographer=photographer,
-                    price_1_to_3=25.0,
-                    price_4_to_15=30.0,
-                    price_16_plus=35.0
-                )
-
-        else:
-            user.verification_status = f'Disabled: {disabled_reason}'
-            user.save()
-
-        print(f'Updated verification status for user {user.email}: {user.verification_status}')
 
 
 
@@ -2009,6 +1915,7 @@ def create_checkout_session(request):
         currency = data.get('currency', 'usd')
         quantity = data.get('quantity', 1)
         connected_account_id = data.get('connected_account_id')
+        purchase_id = data.get('purchase_id')
 
         # Validate required fields
         if not connected_account_id:
@@ -2033,6 +1940,7 @@ def create_checkout_session(request):
             mode="payment",
             success_url="https://surfpik.com/PaymentSuccessfull",
             cancel_url="https://surfpik.com/CartErrors",
+            metadata={"purchase_id": purchase_id},
         )
 
         return JsonResponse({"url": session.url})
@@ -2144,5 +2052,230 @@ def create_account_session_for_alerts(request):
 
 
 
+endpoint_secret = config('endpoint_secret')
 
 
+
+
+
+@csrf_exempt
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload=payload, sig_header=sig_header, secret=endpoint_secret
+        )
+    except ValueError:
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError:
+        return HttpResponse(status=400)
+
+    if event['type'] == 'account.updated':
+        account = event['data']['object']
+        handle_account_update(account)
+
+    return JsonResponse({'success': True})
+
+def handle_account_update(account):
+    stripe_account_id = account.get('id')
+    disabled_reason = account.get('requirements', {}).get('disabled_reason')
+
+    user = CustomUser.objects.filter(stripe_account_id=stripe_account_id).first()
+    if user:
+        if disabled_reason is None:
+            user.verification_status = 'Verified'
+            user.is_photographer = True
+            user.save()
+
+            # Create Photographer instance if it doesn't exist and set the stripe_account_id
+            photographer, created = Photographer.objects.get_or_create(user=user, stripe_account_id=stripe_account_id)
+
+            # Create default pricing for images and videos
+            if created:
+                # Default pricing for images
+                DefaultAlbumsPricesForImages.objects.create(
+                    photographer=photographer,
+                    price_1_to_5=20.0,
+                    price_6_to_50=25.0,
+                    price_51_plus=30.0
+                )
+
+                # Default pricing for videos
+                DefaultAlbumsPricesForVideos.objects.create(
+                    photographer=photographer,
+                    price_1_to_3=25.0,
+                    price_4_to_15=30.0,
+                    price_16_plus=35.0
+                )
+
+        else:
+            user.verification_status = f'Disabled: {disabled_reason}'
+            user.save()
+
+        print(f'Updated verification status for user {user.email}: {user.verification_status}')
+
+
+
+
+
+
+@csrf_exempt
+def stripe_webhook_invoke_lambda(request):
+    payload = request.body.decode('utf-8')
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+    endpoint_secret = endpoint_secret  
+
+    # Verify the webhook signature to ensure the request is from Stripe
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+    except ValueError as e:
+        return JsonResponse({'error': 'Invalid payload'}, status=400)
+    except stripe.error.SignatureVerificationError as e:
+        return JsonResponse({'error': 'Signature verification failed'}, status=400)
+
+    # Handle the event based on its type
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        purchase_id = session.get('metadata', {}).get('purchase_id')
+
+        if purchase_id:
+            try:
+                # Get the purchase from the database using purchase_id
+                purchase = Purchase.objects.get(id=purchase_id)
+
+                # Determine the bucket based on the type
+                if purchase.type == "video":
+                    bucket = "surfingram-original-video"
+                elif purchase.type in ["waves", "singleImages"]:
+                    bucket = "surfingram-original-video"
+                else:
+                    bucket = "surfingram-default-bucket"  # Fallback bucket
+
+                # Call the invoke_lambda_view function with the necessary parameters
+                filenames = purchase.filenames.split(',')  # Assuming filenames are stored as a comma-separated string
+                zip_file_name = purchase.zipFileName
+                user_email = purchase.user_email
+
+                # Call the invoke Lambda function
+                lambda_client = boto3.client('lambda', region_name='us-east-2')
+                payload = {
+                    'bucket': bucket,
+                    'filenames': filenames,
+                    'zipFileName': zip_file_name
+                }
+                response = lambda_client.invoke(
+                    FunctionName='arn:aws:lambda:us-east-2:992382571106:function:ZipS3Files',
+                    InvocationType='RequestResponse',
+                    Payload=json.dumps(payload),
+                )
+
+                # Process the Lambda response
+                lambda_response = json.loads(response['Payload'].read())
+                if response['StatusCode'] == 200:
+                    body = json.loads(lambda_response.get('body', '{}'))
+                    download_url = body.get('publicUrl')
+                    if download_url:
+                        send_download_email(user_email, download_url)
+                        return JsonResponse({'message': 'Email sent successfully', 'url': download_url}, status=200)
+                    else:
+                        return JsonResponse({'error': 'Download URL not returned by Lambda'}, status=500)
+
+                else:
+                    return JsonResponse({'error': 'Lambda function failed', 'details': lambda_response}, status=500)
+
+            except Purchase.DoesNotExist:
+                return JsonResponse({'error': 'Purchase not found'}, status=404)
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=500)
+
+    # If the event is not the one we care about, return an empty response
+    return JsonResponse({'message': 'Event received successfully'}, status=200)
+
+
+
+
+
+
+
+
+
+
+
+def invoke_lambda_view(request):
+    try:
+        
+        bucket = request.GET.get('bucket')
+        filenames = request.GET.getlist('filenames')
+        zipFileName= request.GET.get('zipFileName')
+        user_email = request.GET.get('user_email')
+
+        if not bucket or not filenames or not zipFileName:
+            return JsonResponse({'error': 'Missing required parameters'}, status=400)
+
+        # Initialize Boto3 Lambda client
+        lambda_client = boto3.client('lambda', region_name='us-east-2')
+
+        # Lambda invocation parameters
+        payload = {
+            'bucket': bucket,
+            'filenames': filenames,
+            'zipFileName': zipFileName
+        }
+        response = lambda_client.invoke(
+            FunctionName='arn:aws:lambda:us-east-2:992382571106:function:ZipS3Files',
+            InvocationType='RequestResponse',  # Synchronous invocation
+            Payload=json.dumps(payload),
+        )
+
+        # Parse the Lambda response
+        lambda_response = json.loads(response['Payload'].read())
+        if response['StatusCode'] == 200:
+            # Send email with download button
+            body = json.loads(lambda_response.get('body', '{}'))  # Convert the body string to a dictionary
+            download_url = body.get('publicUrl')
+            if download_url:
+                send_download_email(user_email, download_url)  # Call email function here
+                return JsonResponse({'message': 'Email sent successfully', 'url': download_url}, status=200)
+            else:
+                return JsonResponse({'error': 'Download URL not returned by Lambda'}, status=500)
+
+        else:
+            # Handle Lambda errors
+            return JsonResponse({'error': 'Lambda function failed', 'details': lambda_response}, status=500)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+
+
+    
+
+    
+
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
+
+def send_download_email(user_email, download_url):
+    # Use a custom HTML template for the email
+    subject = "Your Download is Ready"
+    html_message = render_to_string('emails/download_email.html', {'download_url': download_url})
+    plain_message = strip_tags(html_message)  # Fallback to plain text if HTML isn't supported
+
+    send_mail(
+        subject,
+        plain_message,
+        settings.DEFAULT_FROM_EMAIL,
+        [user_email],
+        html_message=html_message,
+    )
+
+    # send_mail(
+    #             "Your Download is Ready",
+    #             f"Click the button below to download your files: {download_url}",
+    #             settings.DEFAULT_FROM_EMAIL,
+    #             [user_email],
+    #         )
+    

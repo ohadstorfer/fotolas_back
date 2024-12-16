@@ -211,10 +211,13 @@ class Purchase(models.Model):
     photographer_name = models.CharField(max_length=255, null=True, blank=True)
     surfer_name = models.CharField(max_length=255, null=True, blank=True)
     sessDate = models.DateTimeField(null=True)
-
+    filenames = models.TextField(null=True, blank=True)
+    user_email = models.CharField(max_length=255, null=True, blank=True)
+    zipFileName = models.CharField(max_length=255, null=True, blank=True)
+    type = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
-        return f'Purchase {self.id} - Photographer: {self.photographer.id}, Surfer: {self.surfer.id}'
+        return f'Purchase {self.id} - Photographer: {self.photographer_name}, Surfer: {self.surfer_name}'
 
 
 class PurchaseItem(models.Model):
