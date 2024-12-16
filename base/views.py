@@ -2092,11 +2092,11 @@ endpoint_secret_lambda = config('endpoint_secret_lambda')
 def stripe_webhook_invoke_lambda(request):
     payload = request.body.decode('utf-8')
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-    endpoint_secret_lambda = endpoint_secret_lambda  
+    secret = endpoint_secret_lambda  
 
     # Verify the webhook signature to ensure the request is from Stripe
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret_lambda)
+        event = stripe.Webhook.construct_event(payload, sig_header, secret)
     except ValueError as e:
         return JsonResponse({'error': 'Invalid payload'}, status=400)
     except stripe.error.SignatureVerificationError as e:
