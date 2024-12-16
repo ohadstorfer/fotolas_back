@@ -2121,7 +2121,7 @@ def stripe_webhook_invoke_lambda(request):
                     bucket = "surfingram-default-bucket"  # Fallback bucket
 
                 # Call the invoke_lambda_view function with the necessary parameters
-                filenames = purchase.filenames.split(',')  # Assuming filenames are stored as a comma-separated string
+                filenames = purchase.filenames  # Assuming filenames are stored as a comma-separated string
                 zip_file_name = purchase.zipFileName
                 user_email = purchase.user_email
 
