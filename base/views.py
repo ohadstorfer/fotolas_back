@@ -2086,6 +2086,7 @@ def handle_account_update(account):
 
 
 
+
 endpoint_secret_lambda = config('endpoint_secret_lambda')
 
 @csrf_exempt
@@ -2102,63 +2103,62 @@ def stripe_webhook_invoke_lambda(request):
     except stripe.error.SignatureVerificationError as e:
         return JsonResponse({'error': 'Signature verification failed'}, status=400)
 
-    # Handle the event based on its type
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        purchase_id = session.get('metadata', {}).get('purchase_id')
+    # Now handle all events directly
+    session = event['data']['object']
+    purchase_id = session.get('metadata', {}).get('purchase_id')
 
-        if purchase_id:
-            try:
-                # Get the purchase from the database using purchase_id
-                purchase = Purchase.objects.get(id=purchase_id)
+    if purchase_id:
+        try:
+            # Get the purchase from the database using purchase_id
+            purchase = Purchase.objects.get(id=purchase_id)
 
-                # Determine the bucket based on the type
-                if purchase.type == "videos":
-                    bucket = "surfingram-original-video"
-                elif purchase.type in ["waves", "singleImages"]:
-                    bucket = "surfingram-original-video"
+            # Determine the bucket based on the type
+            if purchase.type == "videos":
+                bucket = "surfingram-original-video"
+            elif purchase.type in ["waves", "singleImages"]:
+                bucket = "surfingram-original-video"
+            else:
+                bucket = "surfingram-default-bucket"  # Fallback bucket
+
+            # Call the invoke Lambda function with the necessary parameters
+            filenames = purchase.filenames  # Assuming filenames are stored as a comma-separated string
+            zip_file_name = purchase.zipFileName
+            user_email = purchase.user_email
+
+            # Call the invoke Lambda function
+            lambda_client = boto3.client('lambda', region_name='us-east-2')
+            payload = {
+                'bucket': bucket,
+                'filenames': filenames,
+                'zipFileName': zip_file_name
+            }
+            response = lambda_client.invoke(
+                FunctionName='arn:aws:lambda:us-east-2:992382571106:function:ZipS3Files',
+                InvocationType='RequestResponse',
+                Payload=json.dumps(payload),
+            )
+
+            # Process the Lambda response
+            lambda_response = json.loads(response['Payload'].read())
+            if response['StatusCode'] == 200:
+                body = json.loads(lambda_response.get('body', '{}'))
+                download_url = body.get('publicUrl')
+                if download_url:
+                    send_download_email(user_email, download_url)
+                    return JsonResponse({'message': 'Email sent successfully', 'url': download_url}, status=200)
                 else:
-                    bucket = "surfingram-default-bucket"  # Fallback bucket
+                    return JsonResponse({'error': 'Download URL not returned by Lambda'}, status=500)
 
-                # Call the invoke_lambda_view function with the necessary parameters
-                filenames = purchase.filenames  # Assuming filenames are stored as a comma-separated string
-                zip_file_name = purchase.zipFileName
-                user_email = purchase.user_email
+            else:
+                return JsonResponse({'error': 'Lambda function failed', 'details': lambda_response}, status=500)
 
-                # Call the invoke Lambda function
-                lambda_client = boto3.client('lambda', region_name='us-east-2')
-                payload = {
-                    'bucket': bucket,
-                    'filenames': filenames,
-                    'zipFileName': zip_file_name
-                }
-                response = lambda_client.invoke(
-                    FunctionName='arn:aws:lambda:us-east-2:992382571106:function:ZipS3Files',
-                    InvocationType='RequestResponse',
-                    Payload=json.dumps(payload),
-                )
+        except Purchase.DoesNotExist:
+            return JsonResponse({'error': 'Purchase not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
 
-                # Process the Lambda response
-                lambda_response = json.loads(response['Payload'].read())
-                if response['StatusCode'] == 200:
-                    body = json.loads(lambda_response.get('body', '{}'))
-                    download_url = body.get('publicUrl')
-                    if download_url:
-                        send_download_email(user_email, download_url)
-                        return JsonResponse({'message': 'Email sent successfully', 'url': download_url}, status=200)
-                    else:
-                        return JsonResponse({'error': 'Download URL not returned by Lambda'}, status=500)
+    return JsonResponse({'message': 'Event processed successfully'}, status=200)
 
-                else:
-                    return JsonResponse({'error': 'Lambda function failed', 'details': lambda_response}, status=500)
-
-            except Purchase.DoesNotExist:
-                return JsonResponse({'error': 'Purchase not found'}, status=404)
-            except Exception as e:
-                return JsonResponse({'error': str(e)}, status=500)
-
-    # If the event is not the one we care about, return an empty response
-    return JsonResponse({'message': 'Event received successfully'}, status=200)
 
 
 
