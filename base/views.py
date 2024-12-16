@@ -1903,12 +1903,12 @@ def create_checkout_session(request):
             payment_intent_data={
                 "application_fee_amount": int(amount * 0.2) + 100,
                 "transfer_data": {"destination": connected_account_id},
-                "metadata": {"purchase_id": purchase_id},
+                "metadata": {"purchase_id": str(purchase_id)},
             },
             mode="payment",
             success_url="https://surfpik.com/PaymentSuccessfull",
             cancel_url="https://surfpik.com/CartErrors",
-            metadata={"purchase_id": purchase_id},
+            metadata={"purchase_id":  str(purchase_id)},
         )
 
         return JsonResponse({"url": session.url})
