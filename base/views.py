@@ -2090,7 +2090,7 @@ endpoint_secret_lambda = config('endpoint_secret_lambda')
 
 @csrf_exempt
 def stripe_webhook_invoke_lambda(request):
-    payload = request.body.decode('utf-8')
+    payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
     secret = endpoint_secret_lambda  
 
