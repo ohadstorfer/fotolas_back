@@ -1908,7 +1908,7 @@ def create_checkout_session(request):
             mode="payment",
             success_url="https://surfpik.com/PaymentSuccessfull",
             cancel_url="https://surfpik.com/CartErrors",
-            metadata={"purchase_id":  str(purchase_id)},
+            client_reference_id = str(purchase_id),
         )
 
         return JsonResponse({"url": session.url})
@@ -2106,7 +2106,7 @@ def stripe_webhook_invoke_lambda(request):
 
     # Now handle all events directly
     session = event['data']['object']
-    purchase_id = session.get('metadata', {}).get('purchase_id')
+    purchase_id = session.get("client_reference_id")
 
     if purchase_id:
         try:
