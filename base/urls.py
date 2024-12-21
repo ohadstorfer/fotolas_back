@@ -10,7 +10,7 @@ from .views import (
     SpotLikeListCreateView, SpotLikeDetailView,
     FollowerListCreateView, FollowerDetailView, ValidateTokenView,
     DefaultAlbumsPricesForImagesCreateView, DefaultAlbumsPricesForImagesUpdateView, DefaultAlbumsPricesForImagesListView,  DefaultAlbumsPricesForVideosCreateView, DefaultAlbumsPricesForVideosUpdateView, DefaultAlbumsPricesForVideosListView, create_account, create_account_link, create_account_session, create_account_session_for_alerts, create_checkout_session,
-    create_images_and_waves, create_videos, get_batch_presigned_urlssss, get_images_by_ids, get_images_for_multiple_waves, get_images_for_wave, DeactivateSessionAlbum,  get_original_videos, get_videos_by_ids, get_videos_by_session, get_watermarked_photos_by_wave, get_watermarked_videos, get_waves, get_waves_for_session_album, invoke_lambda_view, presigned_urls_for_original_videos, presigned_urls_for_originals, presigned_urls_for_profile_pictures, presigned_urls_for_watermarked, presigned_urls_for_watermarked_videos, stripe_webhook, stripe_webhook_invoke_lambda, 
+    create_images_and_waves, create_videos, get_batch_presigned_urlssss, get_images_by_ids, get_images_for_multiple_waves, get_images_for_wave, DeactivateSessionAlbum,  get_original_videos, get_videos_by_ids, get_videos_by_session, get_watermarked_photos_by_wave, get_watermarked_videos, get_waves, get_waves_for_session_album, invoke_lambda_view, presigned_urls_for_original_videos, presigned_urls_for_originals, presigned_urls_for_profile_pictures, presigned_urls_for_watermarked, presigned_urls_for_watermarked_videos, stripe_webhook, stripe_webhook_invoke_lambda, test_webhook_invoke_lambda, 
 )
 
 urlpatterns = [
@@ -135,6 +135,7 @@ urlpatterns = [
     path('api/create-checkout-session/', create_checkout_session, name='create_checkout_session'),
     path('create_account_session/', create_account_session, name='create_account_session'),
     path('create_account_session_for_alerts/', create_account_session_for_alerts, name='create_account_session_for_alerts'),
+    path('test-webhook/', test_webhook_invoke_lambda, name='test-webhook'),
 
     path('invoke-lambda/', invoke_lambda_view, name='invoke_lambda'),
 

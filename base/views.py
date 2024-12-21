@@ -2168,6 +2168,92 @@ def stripe_webhook_invoke_lambda(request):
 
 
 
+@csrf_exempt
+def test_webhook_invoke_lambda(request):
+    try:
+        # Parse the incoming request body as JSON
+        payload = json.loads(request.body)
+
+        # Extract the necessary data from the payload
+        event = payload  # Simulating the Stripe event object
+        session = event['data']['object']
+        purchase_id = session.get("client_reference_id")
+
+        if purchase_id:
+            try:
+                # Get the purchase from the database using purchase_id
+                purchase = Purchase.objects.get(id=purchase_id)
+
+                # Determine the bucket based on the type
+                if purchase.type == "videos":
+                    bucket = "surfingram-original-video"
+                elif purchase.type in ["waves", "singleImages"]:
+                    bucket = "surfingram-original-video"
+                else:
+                    bucket = "surfingram-default-bucket"  # Fallback bucket
+
+                # Call the invoke Lambda function with the necessary parameters
+                filenames = purchase.filenames  # Assuming filenames are stored as a comma-separated string
+                zip_file_name = purchase.zipFileName
+                user_email = purchase.user_email
+
+                # Prepare the Lambda payload
+                lambda_payload = {
+                    'bucket': bucket,
+                    'filenames': filenames,
+                    'zipFileName': zip_file_name
+                }
+
+                # Call the invoke Lambda function
+                lambda_client = boto3.client('lambda', region_name='us-east-2')
+                response = lambda_client.invoke(
+                    FunctionName='arn:aws:lambda:us-east-2:992382571106:function:ZipS3Files',
+                    InvocationType='RequestResponse',
+                    Payload=json.dumps(lambda_payload),
+                )
+
+                # Process the Lambda response
+                lambda_response = json.loads(response['Payload'].read())
+                if response['StatusCode'] == 200:
+                    body = json.loads(lambda_response.get('body', '{}'))
+                    download_url = body.get('publicUrl')
+                    if download_url:
+                        # Send an email with the download URL
+                        send_download_email(user_email, download_url)
+                        return JsonResponse({
+                            'message': 'Email sent successfully',
+                            'url': download_url,
+                            'lambdaPayload': lambda_payload  # Include the payload in the response
+                        }, status=200)
+                    else:
+                        return JsonResponse({
+                            'error': 'Download URL not returned by Lambda',
+                            'lambdaPayload': lambda_payload  # Include the payload for debugging
+                        }, status=500)
+
+                else:
+                    return JsonResponse({
+                        'error': 'Lambda function failed',
+                        'details': lambda_response,
+                        'lambdaPayload': lambda_payload  # Include the payload for debugging
+                    }, status=500)
+
+            except Purchase.DoesNotExist:
+                return JsonResponse({'error': 'Purchase not found'}, status=404)
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=500)
+
+        return JsonResponse({'message': 'Event processed successfully, but no purchase ID provided'}, status=200)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON payload'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+
+
+
 
 
 
