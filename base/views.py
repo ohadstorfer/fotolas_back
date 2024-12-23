@@ -2358,8 +2358,6 @@ class CreatePurchaseView(APIView):
                 "sessDate": request.data.get('sessDate'),
                 "SessionAlbum": request.data.get('session_album_id'),
                 "spot_name": request.data.get('spot_name'),
-                "surfer": request.data.get('surfer_id'),
-                "surfer_name": request.data.get('surfer_name'),
                 "total_item_quantity": request.data.get('total_item_quantity'),
                 "total_price": request.data.get('total_price'),
                 "user_email": request.data.get('user_email'),
