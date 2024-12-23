@@ -202,7 +202,7 @@ class DefaultAlbumsPricesForVideos(models.Model):
 
 class Purchase(models.Model):
     photographer = models.ForeignKey(Photographer, on_delete=models.CASCADE, related_name='purchases_as_photographer')
-    surfer = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='purchases_as_surfer')
+    surfer = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='purchases_as_surfer', null=True, blank=True)
     order_date = models.DateTimeField(auto_now_add=True)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     total_item_quantity = models.IntegerField( null=True, blank=True)
