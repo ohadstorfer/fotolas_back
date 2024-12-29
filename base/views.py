@@ -731,7 +731,7 @@ class SessionAlbumByPhotographer(generics.ListAPIView):
                 When(videos=False, then=F('created_at') + timedelta(days=30)),
                 default=None
             )
-        ).filter(calculated_expiration_date__gte=now)  # Filter to ensure sessions are not expired
+        )
         return queryset.order_by('-id')
 
 
@@ -755,7 +755,7 @@ class SessionAlbumBySpot(generics.ListAPIView):
                 When(videos=False, then=F('created_at') + timedelta(days=30)),
                 default=None
             )
-        ).filter(calculated_expiration_date__gte=now)  # Filter to ensure sessions are not expired
+        )
         return queryset.order_by('-id')
 
 
