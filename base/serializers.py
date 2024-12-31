@@ -117,7 +117,7 @@ class SpotSerializer(serializers.ModelSerializer):
         fields = '__all__'  # or specify the fields you want to include
 
     def get_session_album_count(self, obj):
-        return SessionAlbum.objects.filter(spot=obj).count()
+        return SessionAlbum.objects.filter(spot=obj , active=True).count()
     
 
 
