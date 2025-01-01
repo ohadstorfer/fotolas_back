@@ -283,10 +283,15 @@ class SessionAlbumByPhotographerSerializer(serializers.ModelSerializer):
 
 
     def get_days_until_expiration(self, obj):
-        if obj.expiration_date:
-            remaining_time = obj.expiration_date - timezone.now()
-            return max(0, remaining_time.days)  # Ensure non-negative value
-        return None
+        if obj.created_at:
+            # Determine expiration duration based on whether it's videos or not
+            if obj.videos:
+                expiration_duration = timedelta(days=5)
+            else:
+                expiration_duration = timedelta(days=30)
+            expiration_date = obj.created_at + expiration_duration
+            remaining_time = expiration_date - timezone.now()
+            return remaining_time.days
 
 
 class SessionAlbumBySpotSerializer(serializers.ModelSerializer):
@@ -301,8 +306,13 @@ class SessionAlbumBySpotSerializer(serializers.ModelSerializer):
 
 
     def get_days_until_expiration(self, obj):
-        if obj.expiration_date:
-            remaining_time = obj.expiration_date - timezone.now()
-            return max(0, remaining_time.days)  # Ensure non-negative value
-        return None
+        if obj.created_at:
+            # Determine expiration duration based on whether it's videos or not
+            if obj.videos:
+                expiration_duration = timedelta(days=5)
+            else:
+                expiration_duration = timedelta(days=30)
+            expiration_date = obj.created_at + expiration_duration
+            remaining_time = expiration_date - timezone.now()
+            return remaining_time.days
     
