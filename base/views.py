@@ -725,6 +725,12 @@ class SessionAlbumByPhotographer(generics.ListAPIView):
         queryset = SessionAlbum.objects.filter(
             photographer__id=photographer_id,
             active=True
+        ).annotate(
+            calculated_expiration_date=Case(
+                When(videos=True, then=F('created_at') + timedelta(days=5)),
+                When(videos=False, then=F('created_at') + timedelta(days=30)),
+                default=None
+            )
         )
         return queryset.order_by('-id')
 
@@ -743,6 +749,12 @@ class SessionAlbumBySpot(generics.ListAPIView):
         queryset = SessionAlbum.objects.filter(
             spot__id=spot_id,
             active=True
+        ).annotate(
+            calculated_expiration_date=Case(
+                When(videos=True, then=F('created_at') + timedelta(days=5)),
+                When(videos=False, then=F('created_at') + timedelta(days=30)),
+                default=None
+            )
         )
         return queryset.order_by('-id')
 
