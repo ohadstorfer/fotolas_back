@@ -1245,149 +1245,158 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Img, Wave, SessionAlbum
 
-# @api_view(['POST'])
-# def create_images_and_waves(request):
-#     original_urls = request.data.get('original_urls', [])
-#     watermarked_urls = request.data.get('watermarked_urls', [])
-#     session_album_id = request.data.get('session_album')
-#     exif_dates = request.data.get('exif_dates', [])
+@api_view(['POST'])
+def create_images_and_waves(request):
+    original_urls = request.data.get('original_urls', [])
+    watermarked_urls = request.data.get('watermarked_urls', [])
+    session_album_id = request.data.get('session_album')
+    exif_dates = request.data.get('exif_dates', [])
 
 
 
-#     # Validate session_album_id
-#     if not session_album_id:
-#         return Response({'error': 'Session album ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+    # Validate session_album_id
+    if not session_album_id:
+        return Response({'error': 'Session album ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-#     # Validate that URL lists are the same length
-#     if len(original_urls) != len(watermarked_urls):
-#         return Response({'error': 'Mismatched number of URLs'}, status=status.HTTP_400_BAD_REQUEST)
+    # Validate that URL lists are the same length
+    if len(original_urls) != len(watermarked_urls):
+        return Response({'error': 'Mismatched number of URLs'}, status=status.HTTP_400_BAD_REQUEST)
 
-#     # Check if all EXIF dates are "null"
-#     if all(exif_date == "null" for exif_date in exif_dates):
-#         # If all EXIF dates are "null", create images with wave = null
-#         images_to_create = [
-#             Img(photo=original_url, WatermarkedPhoto=watermarked_url, SessionAlbum_id=session_album_id)
-#             for original_url, watermarked_url in zip(original_urls, watermarked_urls)
-#         ]
-#         Img.objects.bulk_create(images_to_create)
+
+
+    sorted_data = sorted(
+        zip(original_urls, watermarked_urls, exif_dates),
+        key=lambda x: (x[2] != "null", x[2])  # "null" is treated as the lowest priority
+    )
+    original_urls, watermarked_urls, exif_dates = zip(*sorted_data)
+
+
+    # Check if all EXIF dates are "null"
+    if all(exif_date == "null" for exif_date in exif_dates):
+        # If all EXIF dates are "null", create images with wave = null
+        images_to_create = [
+            Img(photo=original_url, WatermarkedPhoto=watermarked_url, SessionAlbum_id=session_album_id)
+            for original_url, watermarked_url in zip(original_urls, watermarked_urls)
+        ]
+        Img.objects.bulk_create(images_to_create)
         
-#         # Mark the SessionAlbum as active but not divided into waves
-#         session_album = SessionAlbum.objects.get(id=session_album_id)
-#         session_album.dividedToWaves = False
-#         session_album.active = True
-#         session_album.set_expiration_date()
-#         session_album.save()
+        # Mark the SessionAlbum as active but not divided into waves
+        session_album = SessionAlbum.objects.get(id=session_album_id)
+        session_album.dividedToWaves = False
+        session_album.active = True
+        session_album.set_expiration_date()
+        session_album.save()
 
-#         return Response({'message': 'Images created successfully without waves'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Images created successfully without waves'}, status=status.HTTP_201_CREATED)
     
 
 
 
 
-#     # Check if all EXIF dates are identical
-#     if len(set(exif_dates)) == 1:  # If all EXIF dates are identical
-#         # If all EXIF dates are the same, create images without waves
-#         images_to_create = [
-#             Img(photo=original_url, WatermarkedPhoto=watermarked_url, SessionAlbum_id=session_album_id)
-#             for original_url, watermarked_url in zip(original_urls, watermarked_urls)
-#         ]
-#         Img.objects.bulk_create(images_to_create)
+    # Check if all EXIF dates are identical
+    if len(set(exif_dates)) == 1:  # If all EXIF dates are identical
+        # If all EXIF dates are the same, create images without waves
+        images_to_create = [
+            Img(photo=original_url, WatermarkedPhoto=watermarked_url, SessionAlbum_id=session_album_id)
+            for original_url, watermarked_url in zip(original_urls, watermarked_urls)
+        ]
+        Img.objects.bulk_create(images_to_create)
         
-#         # Mark the SessionAlbum as active but not divided into waves
-#         session_album = SessionAlbum.objects.get(id=session_album_id)
-#         session_album.dividedToWaves = False
-#         session_album.active = True
-#         session_album.set_expiration_date()
-#         session_album.save()
+        # Mark the SessionAlbum as active but not divided into waves
+        session_album = SessionAlbum.objects.get(id=session_album_id)
+        session_album.dividedToWaves = False
+        session_album.active = True
+        session_album.set_expiration_date()
+        session_album.save()
 
-#         return Response({'message': 'Images created successfully without waves'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Images created successfully without waves'}, status=status.HTTP_201_CREATED)
     
     
 
-#     images_and_waves = []
-#     current_wave = None
-#     previous_datetime = None
-#     TIME_GAP_THRESHOLD = 3  # seconds
+    images_and_waves = []
+    current_wave = None
+    previous_datetime = None
+    TIME_GAP_THRESHOLD = 3  # seconds
 
-#     # Lists to keep track of images without EXIF data
-#     no_exif_images = []
+    # Lists to keep track of images without EXIF data
+    no_exif_images = []
 
-#     try:
-#         for i, (original_url, watermarked_url) in enumerate(zip(original_urls, watermarked_urls)):
-#             exif_date = exif_dates[i] if i < len(exif_dates) else None
+    try:
+        for i, (original_url, watermarked_url) in enumerate(zip(original_urls, watermarked_urls)):
+            exif_date = exif_dates[i] if i < len(exif_dates) else None
 
-#             if exif_date != "null":
-#                 try:
-#                     # Convert EXIF date string to datetime object
-#                     datetime_original = datetime.strptime(exif_date, "%Y:%m:%d %H:%M:%S")
-#                 except ValueError:
-#                     datetime_original = None
+            if exif_date != "null":
+                try:
+                    # Convert EXIF date string to datetime object
+                    datetime_original = datetime.strptime(exif_date, "%Y:%m:%d %H:%M:%S")
+                except ValueError:
+                    datetime_original = None
 
-#                 if datetime_original:
-#                     # Handle images with EXIF data
-#                     if not current_wave or (datetime_original - previous_datetime) > timedelta(seconds=TIME_GAP_THRESHOLD):
-#                         current_wave = create_wave(session_album_id, watermarked_url)
-#                         previous_datetime = datetime_original
+                if datetime_original:
+                    # Handle images with EXIF data
+                    if not current_wave or (datetime_original - previous_datetime) > timedelta(seconds=TIME_GAP_THRESHOLD):
+                        current_wave = create_wave(session_album_id, watermarked_url)
+                        previous_datetime = datetime_original
 
-#                     images_and_waves.append((original_url, watermarked_url, current_wave))
-#                 else:
-#                     # If datetime conversion fails, treat it as no EXIF data
-#                     no_exif_images.append((original_url, watermarked_url))
-#             else:
-#                 # Handle images without EXIF data
-#                 no_exif_images.append((original_url, watermarked_url))
+                    images_and_waves.append((original_url, watermarked_url, current_wave))
+                else:
+                    # If datetime conversion fails, treat it as no EXIF data
+                    no_exif_images.append((original_url, watermarked_url))
+            else:
+                # Handle images without EXIF data
+                no_exif_images.append((original_url, watermarked_url))
 
-#         # Process images with EXIF data
-#         if images_and_waves:
-#             create_images(images_and_waves)
+        # Process images with EXIF data
+        if images_and_waves:
+            create_images(images_and_waves)
         
-#         # Process images without EXIF data
-#         if no_exif_images:
-#             for original_url, watermarked_url in no_exif_images:
-#                 wave = create_wave(session_album_id, watermarked_url)
-#                 create_images([(original_url, watermarked_url, wave)])
+        # Process images without EXIF data
+        if no_exif_images:
+            for original_url, watermarked_url in no_exif_images:
+                wave = create_wave(session_album_id, watermarked_url)
+                create_images([(original_url, watermarked_url, wave)])
         
-#         # Mark the SessionAlbum as active and dividedToWaves as True after successful processing
-#         session_album = SessionAlbum.objects.get(id=session_album_id)
-#         session_album.dividedToWaves = True
-#         session_album.active = True
-#         session_album.set_expiration_date()
-#         session_album.save()
+        # Mark the SessionAlbum as active and dividedToWaves as True after successful processing
+        session_album = SessionAlbum.objects.get(id=session_album_id)
+        session_album.dividedToWaves = True
+        session_album.active = True
+        session_album.set_expiration_date()
+        session_album.save()
 
-#         return Response({'message': 'Images and Waves created successfully'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Images and Waves created successfully'}, status=status.HTTP_201_CREATED)
 
-#     except Exception as e:
-#         print(f"Error creating waves: {e}")
+    except Exception as e:
+        print(f"Error creating waves: {e}")
 
-#         # Create images without waves in case of an error
-#         images_to_create = [
-#             Img(photo=original_url, WatermarkedPhoto=watermarked_url, SessionAlbum_id=session_album_id)
-#             for original_url, watermarked_url in zip(original_urls, watermarked_urls)
-#         ]
-#         Img.objects.bulk_create(images_to_create)
+        # Create images without waves in case of an error
+        images_to_create = [
+            Img(photo=original_url, WatermarkedPhoto=watermarked_url, SessionAlbum_id=session_album_id)
+            for original_url, watermarked_url in zip(original_urls, watermarked_urls)
+        ]
+        Img.objects.bulk_create(images_to_create)
 
-#         # Update the session album to set dividedToWaves to False if an error occurred
-#         try:
-#             session_album = SessionAlbum.objects.get(id=session_album_id)
-#             session_album.dividedToWaves = False  # Set to False if any error occurs
-#             session_album.active = True
-#             session_album.set_expiration_date()
-#             session_album.save()
-#         except SessionAlbum.DoesNotExist:
-#             print(f"SessionAlbum with id {session_album_id} does not exist.")
+        # Update the session album to set dividedToWaves to False if an error occurred
+        try:
+            session_album = SessionAlbum.objects.get(id=session_album_id)
+            session_album.dividedToWaves = False  # Set to False if any error occurs
+            session_album.active = True
+            session_album.set_expiration_date()
+            session_album.save()
+        except SessionAlbum.DoesNotExist:
+            print(f"SessionAlbum with id {session_album_id} does not exist.")
 
-#         return Response({'message': 'Images created successfully, but wave creation failed'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Images created successfully, but wave creation failed'}, status=status.HTTP_201_CREATED)
 
-# def create_wave(session_album_id, cover_image_url):
-#     wave = Wave.objects.create(session_album_id=session_album_id, cover_image=cover_image_url)
-#     return wave
+def create_wave(session_album_id, cover_image_url):
+    wave = Wave.objects.create(session_album_id=session_album_id, cover_image=cover_image_url)
+    return wave
 
-# def create_images(images_and_waves):
-#     images_to_create = [
-#         Img(photo=original_url, WatermarkedPhoto=watermarked_url, wave=wave, SessionAlbum_id=wave.session_album_id if wave else None)
-#         for original_url, watermarked_url, wave in images_and_waves
-#     ]
-#     Img.objects.bulk_create(images_to_create)
+def create_images(images_and_waves):
+    images_to_create = [
+        Img(photo=original_url, WatermarkedPhoto=watermarked_url, wave=wave, SessionAlbum_id=wave.session_album_id if wave else None)
+        for original_url, watermarked_url, wave in images_and_waves
+    ]
+    Img.objects.bulk_create(images_to_create)
 
 
 
