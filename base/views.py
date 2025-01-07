@@ -2204,9 +2204,9 @@ def stripe_webhook_invoke_lambda(request):
             if purchase.type == "videos":
                 bucket = "surfingram-original-video"
             elif purchase.type in ["waves", "singleImages"]:
-                bucket = "surfingram-original-video"
+                bucket = "surfingram"
             else:
-                bucket = "surfingram-default-bucket"  # Fallback bucket
+                bucket = "surfingram"  # Fallback bucket
 
             # Call the invoke Lambda function with the necessary parameters
             filenames = purchase.filenames  # Assuming filenames are stored as a comma-separated string
@@ -2271,13 +2271,13 @@ def test_webhook_invoke_lambda(request):
                 # Get the purchase from the database using purchase_id
                 purchase = Purchase.objects.get(id=purchase_id)
 
-                # Determine the bucket based on the type
+               # Determine the bucket based on the type
                 if purchase.type == "videos":
                     bucket = "surfingram-original-video"
                 elif purchase.type in ["waves", "singleImages"]:
-                    bucket = "surfingram-original-video"
+                    bucket = "surfingram"
                 else:
-                    bucket = "surfingram-default-bucket"  # Fallback bucket
+                    bucket = "surfingram"  # Fallback bucket
 
                 # Call the invoke Lambda function with the necessary parameters
                 filenames = purchase.filenames  # Assuming filenames are stored as a comma-separated string
