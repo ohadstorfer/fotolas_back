@@ -215,6 +215,7 @@ class Purchase(models.Model):
     user_email = models.CharField(max_length=255, null=True, blank=True)
     zipFileName = models.CharField(max_length=255, null=True, blank=True)
     type = models.CharField(max_length=255, null=True, blank=True)
+    active = models.BooleanField(default=False)
 
     def __str__(self):
         return f'Purchase {self.id} - Photographer: {self.photographer_name}, Surfer: {self.surfer_name}'

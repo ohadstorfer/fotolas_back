@@ -533,7 +533,7 @@ class GetPurchasedItemsBySurfer(APIView):
     def get(self, request, surfer_id):
         try:
             # Find all Purchases for the given surfer
-            purchases = Purchase.objects.filter(surfer_id=surfer_id)
+            purchases = Purchase.objects.filter(surfer_id=surfer_id , active=True)
             purchased_images = []
             purchased_videos = []
 
@@ -583,7 +583,7 @@ class GetPurchasesByPhotographerName(APIView):
     def get(self, request, photographer_name):
         try:
             # Filter purchases by photographer_name
-            purchases = Purchase.objects.filter(photographer_name=photographer_name)
+            purchases = Purchase.objects.filter(photographer_name=photographer_name, active=True)
 
             if not purchases.exists():
                 return Response({"error": "No purchases found for this photographer"}, status=status.HTTP_404_NOT_FOUND)
@@ -2206,6 +2206,9 @@ def stripe_webhook_invoke_lambda(request):
             # Get the purchase from the database using purchase_id
             purchase = Purchase.objects.get(id=purchase_id)
 
+            purchase.active = True
+            purchase.save()
+
             # Determine the bucket based on the type
             if purchase.type == "videos":
                 bucket = "surfingram-original-video"
@@ -2276,6 +2279,9 @@ def test_webhook_invoke_lambda(request):
             try:
                 # Get the purchase from the database using purchase_id
                 purchase = Purchase.objects.get(id=purchase_id)
+
+                purchase.active = True
+                purchase.save()
 
                # Determine the bucket based on the type
                 if purchase.type == "videos":
