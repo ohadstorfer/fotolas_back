@@ -594,15 +594,20 @@ class GetPurchasesByPhotographerName(APIView):
                 # Format dates
                 formatted_order_date = purchase.order_date.strftime('%Y-%m-%d') if purchase.order_date else ''
                 formatted_sess_date = purchase.sessDate.strftime('%Y-%m-%d') if purchase.sessDate else ''
-                
+
+                # Safely access the related fields to avoid NoneType errors
+                photographer_id = purchase.photographer.id if purchase.photographer else None
+                surfer_id = purchase.surfer.id if purchase.surfer else None
+                session_album_id = purchase.SessionAlbum.id if purchase.SessionAlbum else None
+
                 purchase_data = {
                     'id': purchase.id,
-                    'photographer_id': purchase.photographer.id,
-                    'surfer_id': purchase.surfer.id,
+                    'photographer_id': photographer_id,
+                    'surfer_id': surfer_id,
                     'order_date': formatted_order_date,
                     'total_price': purchase.total_price,
                     'total_item_quantity': purchase.total_item_quantity,
-                    'session_album_id': purchase.SessionAlbum.id if purchase.SessionAlbum else None,
+                    'session_album_id': session_album_id,
                     'spot_name': purchase.spot_name,
                     'photographer_name': purchase.photographer_name,
                     'surfer_name': purchase.surfer_name,
@@ -614,6 +619,7 @@ class GetPurchasesByPhotographerName(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 
