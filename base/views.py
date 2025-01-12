@@ -583,7 +583,7 @@ class GetPurchasesByPhotographerName(APIView):
     def get(self, request, photographer_name):
         try:
             # Filter purchases by photographer_name
-            purchases = Purchase.objects.filter(photographer_name=photographer_name, active=True)
+            purchases = Purchase.objects.filter(photographer_name=photographer_name, active=True).order_by('-id')
 
             if not purchases.exists():
                 return Response({"error": "No purchases found for this photographer"}, status=status.HTTP_404_NOT_FOUND)
