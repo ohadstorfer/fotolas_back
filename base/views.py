@@ -606,6 +606,7 @@ class GetPurchasesByPhotographerName(APIView):
                     'surfer_id': surfer_id,
                     'order_date': formatted_order_date,
                     'total_price': purchase.total_price,
+                    'netPrice': purchase.netPrice,
                     'total_item_quantity': purchase.total_item_quantity,
                     'session_album_id': session_album_id,
                     'spot_name': purchase.spot_name,
