@@ -1931,6 +1931,13 @@ def create_account(request):
             },
             "business_type": "individual",  # Set this according to your requirements
             "country": selectedCountry,
+            "settings": {
+                "payouts": {
+                    "schedule": {
+                        "interval": "manual"  # Set the payout schedule to manual
+                    }
+                }
+            },
         }
         
         # If the country is not "us", include the tos_acceptance field
