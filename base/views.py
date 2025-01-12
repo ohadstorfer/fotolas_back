@@ -2464,6 +2464,19 @@ class CreatePurchaseView(APIView):
                 "filenames": request.data.get('filenames', [])
             }
 
+            # Calculate netPrice
+            total_price = float(request.data.get('total_price', 0))
+            photographer_name = request.data.get('photographer_name')
+
+            if photographer_name == "Fotos Hugo":
+                net_price = total_price - 1
+            else:
+                net_price = (total_price * 0.8) - 1
+
+            # Add netPrice to the dictionary
+            purchase_data["netPrice"] = round(net_price, 2)  # Optional: round to 2 decimal places
+
+
             # Serialize and save the purchase data without the zipFileName
             purchase_serializer = PurchaseSerializer(data=purchase_data)
             if purchase_serializer.is_valid():
