@@ -2049,8 +2049,8 @@ def create_account_session(request):
                     "enabled": True,
                     "features": {
                         "instant_payouts": False,
-                        "standard_payouts": False,
-                        "edit_payout_schedule": False,
+                        "standard_payouts": True,
+                        "edit_payout_schedule": True,
                     },
                     },
             },
