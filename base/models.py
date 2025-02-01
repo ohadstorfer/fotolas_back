@@ -113,7 +113,7 @@ class SessionAlbum(models.Model):
 
     def set_expiration_date(self):
         if self.videos or self.videosPerAlbums:
-            self.expiration_date = self.created_at + timedelta(days=5)
+            self.expiration_date = self.created_at + timedelta(days=30)
         else:
             self.expiration_date = self.created_at + timedelta(days=30)
         self.save()

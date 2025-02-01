@@ -260,7 +260,7 @@ class SessionAlbumWithDetailsSerializer(serializers.ModelSerializer):
         if obj.created_at:
             # Determine expiration duration based on whether it's videos or not
             if obj.videos:
-                expiration_duration = timedelta(days=5)
+                expiration_duration = timedelta(days=30)
             else:
                 expiration_duration = timedelta(days=30)
             expiration_date = obj.created_at + expiration_duration
@@ -286,7 +286,7 @@ class SessionAlbumByPhotographerSerializer(serializers.ModelSerializer):
         if obj.created_at:
             # Determine expiration duration based on whether it's videos or not
             if obj.videos:
-                expiration_duration = timedelta(days=5)
+                expiration_duration = timedelta(days=30)
             else:
                 expiration_duration = timedelta(days=30)
             expiration_date = obj.created_at + expiration_duration
@@ -309,7 +309,7 @@ class SessionAlbumBySpotSerializer(serializers.ModelSerializer):
         if obj.created_at:
             # Determine expiration duration based on whether it's videos or not
             if obj.videos:
-                expiration_duration = timedelta(days=5)
+                expiration_duration = timedelta(days=30)
             else:
                 expiration_duration = timedelta(days=30)
             expiration_date = obj.created_at + expiration_duration
