@@ -107,6 +107,7 @@ class SessionAlbum(models.Model):
     cover_image = models.CharField(max_length=255, null=True, blank=True)
     videos = models.BooleanField(default=False)
     videosPerAlbums = models.BooleanField(default=False)
+    forever = models.BooleanField(null=True, blank=True, default=True)
     dividedToWaves = models.BooleanField(null=True)
     active = models.BooleanField(default=False)
     expiration_date = models.DateTimeField(null=True, blank=True)

@@ -10,4 +10,4 @@ from .models import  CustomUser, Img , Video
 
 # Register the CustomUser model with the admin panel
 admin.site.register([Img ])
-admin.site.register([CustomUser, models.Photographer, models.Spot , models.SessionAlbum , models.Wave, models.Video ,models.AlbumsPrices,models.AlbumsPricesForVideos,models.DefaultAlbumsPricesForImages, models.DefaultAlbumsPricesForVideos, models.Purchase, models.PurchaseItem ])
+admin.site.register([models.CustomUser, models.Photographer, models.Spot , models.SessionAlbum , models.Wave, models.Video ,models.AlbumsPrices,models.AlbumsPricesForVideos,models.DefaultAlbumsPricesForImages, models.DefaultAlbumsPricesForVideos, models.Purchase, models.PurchaseItem ])
